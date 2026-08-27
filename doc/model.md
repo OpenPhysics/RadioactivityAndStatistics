@@ -47,7 +47,7 @@ as a run of 10 and a standard error about three times smaller.
 ## The Gaussian limit
 
 For large λ the Poisson distribution approaches a Gaussian with the same mean
-and σ = √λ. The Lab screen can draw that Gaussian on top of the histogram.
+and σ = √λ. Either screen can draw that Gaussian on top of the histogram.
 
 The approximation is not uniformly good, and the sim lets that be seen. At the
 peak the two agree to a fraction of a percent even at λ = 100; one standard

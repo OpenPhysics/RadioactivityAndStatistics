@@ -5,26 +5,35 @@ obvious from the code.
 
 ## Shape of the sim
 
-Two screens over one shared acquisition model.
+Two screens, told apart only by which counting source they are fixed to, over
+one shared acquisition model and one shared view.
 
 ```
 src/
   common/
     hardware/   PascoProtocol.ts  GeigerCounterDevice.ts  webBluetoothSupport.ts
-    model/      RadioactivityModel.ts  CountSource.ts  SimulatedCountSource.ts
-                GeigerCountSource.ts  Statistics.ts  Histogram.ts  GaussianFit.ts
-                CountSample.ts  csvExport.ts  ConnectionState.ts
-    view/       SourcePanel  AcquisitionPanel  DataTableNode  StatisticsPanel
-                HistogramNode  CountRateChartNode  CountRateDisplayNode
+    model/      RadioactivityModel.ts  RadioactivityScreenModel.ts  CountSource.ts
+                ChartViewType.ts  SimulatedCountSource.ts  GeigerCountSource.ts
+                Statistics.ts  Histogram.ts  GaussianFit.ts  CountSample.ts
+                csvExport.ts  ConnectionState.ts
+    view/       RadioactivityScreenView.ts  SourcePanel  AcquisitionPanel
+                ChartViewPanel  DataTableNode  StatisticsPanel  HistogramNode
+                CountRateChartNode  CountRateDisplayNode
                 DistributionControlsPanel  currentDetailsProperty  downloadCsv
-  intro/        model/IntroModel.ts  view/IntroScreenView.ts
-  lab/          model/LabModel.ts    view/LabScreenView.ts
+  simulation/   model/SimulationModel.ts
+  device/       model/DeviceModel.ts
 ```
 
-`IntroModel` and `LabModel` **compose** `RadioactivityModel` rather than extend
-it. Composition keeps the shared model free of any one screen's assumptions:
-the Lab screen adds curve-visibility state without the Intro screen carrying it,
-and neither screen can quietly change acquisition semantics for the other.
+`RadioactivityModel` **composes**, rather than is extended by, the two count
+sources; `RadioactivityScreenModel` in turn composes `RadioactivityModel` and
+adds the state both screens need to display it — which chart is shown, and
+which theoretical curves are drawn over the histogram. `SimulationModel` and
+`DeviceModel` are thin subclasses that only fix which source
+`RadioactivityModel` is locked to (`CountSourceType.SIMULATED` or
+`GEIGER_COUNTER`) and which chart the screen opens on; `RadioactivityScreenView`
+is the one view class both screens use. Composition keeps the shared
+acquisition model free of any one screen's assumptions, and a screen can no
+longer quietly change acquisition semantics for the other.
 
 ## The count-source abstraction
 

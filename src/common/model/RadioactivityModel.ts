@@ -43,6 +43,15 @@ import { computeStatistics, type SampleStatistics } from "./Statistics.js";
 export type RadioactivityModelOptions = {
   /** Host-side Geiger controls from Preferences → Simulation. */
   readonly geigerControls?: GeigerDeviceControls;
+
+  /**
+   * Locks {@link sourceTypeProperty} to one source for the lifetime of the
+   * model (reset returns to this value too, since it is the Property's
+   * initial value). Each screen now has a fixed counting source, so there is
+   * no UI that could ever change it away from this. Defaults to
+   * {@link CountSourceType.SIMULATED}.
+   */
+  readonly fixedSourceType?: CountSourceTypeValue;
 };
 
 export class RadioactivityModel implements TModel {
@@ -132,7 +141,7 @@ export class RadioactivityModel implements TModel {
     this.simulatedSource = new SimulatedCountSource(DEFAULT_ACTIVITY);
     this.geigerSource = new GeigerCountSource(options?.geigerControls ?? null);
 
-    this.sourceTypeProperty = new Property<CountSourceTypeValue>(CountSourceType.SIMULATED);
+    this.sourceTypeProperty = new Property<CountSourceTypeValue>(options?.fixedSourceType ?? CountSourceType.SIMULATED);
     this.activeSourceProperty = new DerivedProperty(
       [this.sourceTypeProperty],
       (sourceType): TCountSource =>

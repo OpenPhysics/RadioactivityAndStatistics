@@ -46,16 +46,14 @@ const stringProperties = LocalizedString.getNestedStringProperties({
 });
 
 /**
- * Explicit `a11y` shape exposed by {@link StringManager.getIntroA11yStrings} and
- * {@link StringManager.getLabA11yStrings}. Keep this in sync with the `a11y`
- * key in `strings_en.json` — a locale key rename that is not mirrored here
- * fails at the getter return (not silently).
- *
- * The Lab screen adds curve and binning controls on top of the shared set, so
- * its `controls` group is a superset of the Intro screen's.
+ * Every control name used across the two screens. Both screens now carry the
+ * same panels — only the fixed counting source and the default chart differ
+ * between them — so one shape covers both `a11y.simulation.controls` and
+ * `a11y.device.controls`; a screen simply never wires up the accessible name
+ * that belongs to the other one's source (e.g. the Bluetooth screen never
+ * builds `activitySlider`).
  */
-export type SharedControlA11yStrings = {
-  readonly sourceRadioGroupStringProperty: ReadOnlyProperty<string>;
+export type ScreenControlA11yStrings = {
   readonly activitySliderStringProperty: ReadOnlyProperty<string>;
   readonly connectButtonStringProperty: ReadOnlyProperty<string>;
   readonly disconnectButtonStringProperty: ReadOnlyProperty<string>;
@@ -66,13 +64,7 @@ export type SharedControlA11yStrings = {
   readonly stopButtonStringProperty: ReadOnlyProperty<string>;
   readonly clearButtonStringProperty: ReadOnlyProperty<string>;
   readonly exportButtonStringProperty: ReadOnlyProperty<string>;
-};
-
-/**
- * The Lab screen's control names: the shared set plus the curve-visibility and
- * binning controls that only it has.
- */
-export type LabControlA11yStrings = SharedControlA11yStrings & {
+  readonly chartViewRadioGroupStringProperty: ReadOnlyProperty<string>;
   readonly poissonCheckboxStringProperty: ReadOnlyProperty<string>;
   readonly gaussianPredictionCheckboxStringProperty: ReadOnlyProperty<string>;
   readonly gaussianFitCheckboxStringProperty: ReadOnlyProperty<string>;
@@ -87,7 +79,7 @@ export type SimA11yStrings = {
     readonly interactionHintStringProperty: ReadOnlyProperty<string>;
   };
   readonly currentDetailsStringProperty: ReadOnlyProperty<string>;
-  readonly controls: SharedControlA11yStrings;
+  readonly controls: ScreenControlA11yStrings;
 };
 
 /**
@@ -136,26 +128,26 @@ export class StringManager {
    * Each property updates automatically when the locale changes.
    */
   public getScreenNames(): {
-    readonly introStringProperty: ReadOnlyProperty<string>;
-    readonly labStringProperty: ReadOnlyProperty<string>;
+    readonly simulationStringProperty: ReadOnlyProperty<string>;
+    readonly deviceStringProperty: ReadOnlyProperty<string>;
   } {
     return {
-      introStringProperty: stringProperties.screens.introStringProperty,
-      labStringProperty: stringProperties.screens.labStringProperty,
+      simulationStringProperty: stringProperties.screens.simulationStringProperty,
+      deviceStringProperty: stringProperties.screens.deviceStringProperty,
     };
   }
 
-  /** Accessibility strings for the Intro screen. */
-  public getIntroA11yStrings() {
-    return stringProperties.a11y.intro;
+  /** Accessibility strings for the Simulation screen (the mock-up counter). */
+  public getSimulationA11yStrings() {
+    return stringProperties.a11y.simulation;
   }
 
-  /** Accessibility strings for the Lab screen. */
-  public getLabA11yStrings() {
-    return stringProperties.a11y.lab;
+  /** Accessibility strings for the Device screen (the Bluetooth Geiger counter). */
+  public getDeviceA11yStrings() {
+    return stringProperties.a11y.device;
   }
 
-  /** Labels for the source panel: source choice, connection, diagnostics. */
+  /** Labels for the source panel: connection and diagnostics. */
   public getSourceStrings() {
     return stringProperties.source;
   }
@@ -185,9 +177,14 @@ export class StringManager {
     return stringProperties.histogram;
   }
 
-  /** Axis titles for the Intro screen's count-rate chart. */
+  /** Axis titles for the count-rate chart. */
   public getRateChartStrings() {
     return stringProperties.rateChart;
+  }
+
+  /** Labels for the histogram / count-rate view switch. */
+  public getChartViewStrings() {
+    return stringProperties.chartView;
   }
 
   /**
