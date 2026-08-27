@@ -19,10 +19,7 @@
     "unsupportedBrowser": "Ce navigateur ne peut pas accéder aux appareils Bluetooth. Utilisez Chrome ou Edge.",
     "insecureContext": "Le Bluetooth exige une page sécurisée (HTTPS).",
     "tubeVoltage": "Tension du tube",
-    "rawRegister": "Registre brut",
-    "registerMode": "Lecture du registre",
-    "registerModeCumulative": "Cumulative",
-    "registerModePerWindow": "Par fenêtre"
+    "rawRegister": "Registre brut"
   },
   "acquisition": {
     "title": "Mesure",
@@ -98,8 +95,7 @@
         "recordButton": "Commencer l'enregistrement des mesures",
         "stopButton": "Arrêter l'enregistrement des mesures",
         "clearButton": "Effacer les mesures recueillies",
-        "exportButton": "Exporter les mesures recueillies en fichier CSV",
-        "registerModeControl": "Interprétation du registre brut de comptage du compteur Geiger"
+        "exportButton": "Exporter les mesures recueillies en fichier CSV"
       }
     },
     "lab": {
@@ -123,7 +119,6 @@
         "stopButton": "Arrêter l'enregistrement des mesures",
         "clearButton": "Effacer les mesures recueillies",
         "exportButton": "Exporter les mesures recueillies en fichier CSV",
-        "registerModeControl": "Interprétation du registre brut de comptage du compteur Geiger",
         "poissonCheckbox": "Afficher la prédiction de Poisson",
         "gaussianPredictionCheckbox": "Afficher la prédiction gaussienne avec sigma égal à la racine carrée de la moyenne",
         "gaussianFitCheckbox": "Afficher la gaussienne ajustée",

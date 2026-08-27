@@ -116,7 +116,7 @@ export const GEIGER_ADVERTISED_NAME = "Geiger Counter";
  * Payload of one sample from sensor 2079, in wire order. Both fields are
  * little-endian unsigned 16-bit, so a sample is 4 bytes:
  *
- *   - CountRate   counts accumulated in the device's sample window
+ *   - CountRate   counts accumulated since the previous read (cleared on read)
  *   - TubeVoltage GM tube bias, nominally 450–600 V
  */
 export const GEIGER_SAMPLE_BYTES = 4;
@@ -126,7 +126,7 @@ export const TUBE_VOLTAGE_RANGE = { min: 450, max: 600 } as const;
 
 /** One decoded sample from the Geiger counter's sensor. */
 export type GeigerSample = {
-  /** Raw CountRate register: counts in the device's current sample window. */
+  /** Raw CountRate register: counts since the previous read. */
   readonly countRegister: number;
   /** GM tube bias in volts. */
   readonly tubeVoltage: number;
@@ -191,17 +191,6 @@ export function decodeGeigerPayload(payload: Uint8Array): GeigerSample | null {
 /** Reads a little-endian unsigned 16-bit integer. */
 export function readUint16LE(bytes: Uint8Array, offset: number): number {
   return (bytes[offset] ?? 0) | ((bytes[offset + 1] ?? 0) << 8);
-}
-
-/** Modulus of the 16-bit CountRate register, used when differencing readings. */
-export const COUNT_REGISTER_MODULUS = 0x10000;
-
-/**
- * Counts accumulated between two readings of the 16-bit CountRate register,
- * correct across the register's wraparound.
- */
-export function countRegisterDelta(previous: number, current: number): number {
-  return (current - previous + COUNT_REGISTER_MODULUS) % COUNT_REGISTER_MODULUS;
 }
 
 /**

@@ -103,30 +103,45 @@ datasheet default is a 30 s window — far too coarse for counting statistics.
 So the sim polls with `GCMD_READ_ONE_SAMPLE` (0x05) at 10 Hz and keeps the
 timebase itself, tied to the user's chosen counting interval.
 
-### The one open question
+The command goes to the **sensor** service's send characteristic, but the device
+answers on the **device** service's notify characteristic — writes to
+`4a5c0001-0002-…` come back on `4a5c0000-0003-…`. This asymmetry is not
+documented anywhere; subscribing to the sensor service's notify characteristic
+instead yields perfect silence with a connection that still looks healthy.
 
-The datasheet calls measurement 0 "CountRate" with unit type *CountsPerSample* —
-counts accumulated over the device's sample window. What that register does under
-one-shot polling could not be confirmed against any document, and could not be
-confirmed against hardware from the development environment.
+### Reading the CountRate register
 
-Rather than bake in a guess, both plausible readings are implemented and
-selectable, and the raw register is exposed in the UI so the behaviour can be
-identified in seconds with a device in hand:
+The datasheet calls measurement 0 "CountRate" with unit type *CountsPerSample*,
+which is ambiguous under one-shot polling. Confirmed against a PS-3238 in
+August 2026: **the device clears the register on read**. Each read returns the
+counts accumulated since the previous read — not a free-running total, and not a
+fixed-length window.
 
-| Mode | Reading | How to recognise it |
-|---|---|---|
-| `cumulative` (default) | register free-runs; difference successive reads | raw register climbs steadily and never resets |
-| `perSampleWindow` | each new value is one window's count; sum the changes | raw register hovers near a small value and does not accumulate |
+Two observations pin it down. The first read after connecting returns everything
+banked since power-on (914, against ~60 for the reads that followed at the same
+spacing), and the values scale with the gap between reads rather than staying
+constant. A capture at ~2 s spacing beside a source:
 
-`cumulative` is the default because differencing is self-correcting: a missed
-poll loses nothing, since the next delta spans the gap. Differencing is done
-modulo 2¹⁶ so a register wraparound reads as a small positive delta, not a
-65 000-count drop.
+```
+write -> 05 04     notify <- c0 00 05 92 03 f4 01   register 914, 500 V
+write -> 05 04     notify <- c0 00 05 49 00 f4 01   register  73, 500 V
+write -> 05 04     notify <- c0 00 05 39 00 f4 01   register  57, 500 V
+write -> 05 04     notify <- c0 00 05 45 00 f4 01   register  69, 500 V
+```
+
+≈ 30 counts/s, matching the counter's own audible rate. Those exact packets are
+pinned in `tests/common/hardware/PascoProtocol.test.ts`.
+
+So `accumulate` sums **every** reading and discards only the first, which exists
+to flush the backlog. Summing unconditionally matters: at a poll interval short
+against the count rate the register holds small integers, so consecutive equal
+readings are common — for a mean of 3 per poll, skipping repeats would
+undercount by roughly 15%. A dropped or timed-out read costs nothing, because
+those counts stay banked on the device and arrive in the next successful read.
 
 Turn on **Preferences → Simulation → Show Geiger counter diagnostics** (or
-`?showDiagnostics=true`) to see the raw register and tube voltage; switch modes
-there or with `?registerMode=perSampleWindow`.
+`?showDiagnostics=true`) to watch the raw register and tube voltage. A healthy
+tube reads 500 V; a zero there means no sample is being decoded at all.
 
 ### Web Bluetooth constraints
 

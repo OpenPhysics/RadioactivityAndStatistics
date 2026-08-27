@@ -19,10 +19,7 @@
     "unsupportedBrowser": "This browser cannot reach Bluetooth devices. Use Chrome or Edge.",
     "insecureContext": "Bluetooth needs a secure (HTTPS) page.",
     "tubeVoltage": "Tube voltage",
-    "rawRegister": "Raw register",
-    "registerMode": "Register reading",
-    "registerModeCumulative": "Cumulative",
-    "registerModePerWindow": "Per window"
+    "rawRegister": "Raw register"
   },
   "acquisition": {
     "title": "Measurement",
@@ -98,8 +95,7 @@
         "recordButton": "Start recording measurements",
         "stopButton": "Stop recording measurements",
         "clearButton": "Clear the collected measurements",
-        "exportButton": "Export the collected measurements as a CSV file",
-        "registerModeControl": "How the Geiger counter's raw count register is interpreted"
+        "exportButton": "Export the collected measurements as a CSV file"
       }
     },
     "lab": {
@@ -123,7 +119,6 @@
         "stopButton": "Stop recording measurements",
         "clearButton": "Clear the collected measurements",
         "exportButton": "Export the collected measurements as a CSV file",
-        "registerModeControl": "How the Geiger counter's raw count register is interpreted",
         "poissonCheckbox": "Show the Poisson prediction",
         "gaussianPredictionCheckbox": "Show the Gaussian prediction with sigma equal to the square root of the mean",
         "gaussianFitCheckbox": "Show the best-fit Gaussian",

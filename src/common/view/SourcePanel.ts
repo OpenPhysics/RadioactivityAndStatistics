@@ -22,7 +22,6 @@ import { CONTROL_PANEL_WIDTH } from "../../RadioactivityAndMeasurementsConstants
 import { getWebBluetoothStatus, WebBluetoothStatus } from "../hardware/webBluetoothSupport.js";
 import { ConnectionState } from "../model/ConnectionState.js";
 import { CountSourceType } from "../model/CountSource.js";
-import { CountRegisterMode } from "../model/GeigerCountSource.js";
 import type { RadioactivityModel } from "../model/RadioactivityModel.js";
 import {
   FLAT_PANEL_PUSH_BUTTON_OPTIONS,
@@ -222,8 +221,8 @@ export class SourcePanel extends RadioactivityAndMeasurementsPanel {
     });
 
     // ── Diagnostics ───────────────────────────────────────────────────────────
-    // Off by default. These two readings are how a user determines which
-    // register mode their counter needs; see GeigerCountSource.
+    // Off by default. A live look at the two registers, for confirming a
+    // counter is reporting sanely — a healthy tube sits near 500 V.
     const registerValueProperty = new DerivedProperty(
       [geigerSource.countRegisterProperty, strings.rawRegisterStringProperty],
       (register, label) => `${label}: ${register}`,
@@ -231,36 +230,6 @@ export class SourcePanel extends RadioactivityAndMeasurementsPanel {
     const tubeVoltageValueProperty = new DerivedProperty(
       [geigerSource.tubeVoltageProperty, strings.tubeVoltageStringProperty],
       (volts, label) => `${label}: ${toFixed(volts, 0)} V`,
-    );
-
-    const registerModeGroup = new AquaRadioButtonGroup(
-      geigerSource.registerModeProperty,
-      [
-        {
-          value: CountRegisterMode.CUMULATIVE,
-          createNode: () =>
-            new Text(strings.registerModeCumulativeStringProperty, {
-              font: new PhetFont(11),
-              fill: RadioactivityAndMeasurementsColors.secondaryTextColorProperty,
-              maxWidth: 90,
-            }),
-        },
-        {
-          value: CountRegisterMode.PER_SAMPLE_WINDOW,
-          createNode: () =>
-            new Text(strings.registerModePerWindowStringProperty, {
-              font: new PhetFont(11),
-              fill: RadioactivityAndMeasurementsColors.secondaryTextColorProperty,
-              maxWidth: 90,
-            }),
-        },
-      ],
-      {
-        orientation: "horizontal",
-        spacing: 10,
-        radioButtonOptions: { radius: 6 },
-        accessibleName: a11y.registerModeControlStringProperty,
-      },
     );
 
     const diagnostics = new VBox({
@@ -276,11 +245,6 @@ export class SourcePanel extends RadioactivityAndMeasurementsPanel {
           font: new PhetFont(11),
           fill: RadioactivityAndMeasurementsColors.secondaryTextColorProperty,
         }),
-        new Text(strings.registerModeStringProperty, {
-          font: new PhetFont(11),
-          fill: RadioactivityAndMeasurementsColors.secondaryTextColorProperty,
-        }),
-        registerModeGroup,
       ],
     });
 

@@ -11,7 +11,6 @@ import { describe, expect, it } from "vitest";
 import {
   CHARACTERISTIC,
   COMMAND,
-  countRegisterDelta,
   decodeGeigerNotification,
   decodeGeigerPayload,
   decodePascoBase64,
@@ -146,6 +145,25 @@ describe("decodeGeigerNotification", () => {
     expect(decodeGeigerNotification(packet)).toEqual({ countRegister: 10, tubeVoltage: 500 });
   });
 
+  it("decodes packets captured from a PS-3238", () => {
+    // Verbatim from a connected counter beside a source: the first read after
+    // connecting returns the backlog banked since power-on, later reads the
+    // counts since the previous read. Tube bias reads 500 V throughout.
+    expect(decodeGeigerNotification(new Uint8Array([0xc0, 0x00, 0x05, 0x92, 0x03, 0xf4, 0x01]))).toEqual({
+      countRegister: 914,
+      tubeVoltage: 500,
+    });
+    expect(decodeGeigerNotification(new Uint8Array([0xc0, 0x00, 0x05, 0x49, 0x00, 0xf4, 0x01]))).toEqual({
+      countRegister: 73,
+      tubeVoltage: 500,
+    });
+  });
+
+  it("ignores the device's unsolicited status packets", () => {
+    // Captured alongside the sample responses; not a one-shot result.
+    expect(decodeGeigerNotification(new Uint8Array([0x85, 0x51, 0x0f, 0x54, 0x00, 0x00]))).toBeNull();
+  });
+
   it("ignores an error result", () => {
     const packet = new Uint8Array([RESPONSE.RESULT, 0x01, COMMAND.READ_ONE_SAMPLE, 0, 0, 0, 0]);
     expect(decodeGeigerNotification(packet)).toBeNull();
@@ -155,18 +173,5 @@ describe("decodeGeigerNotification", () => {
     // A periodic sample is tagged with a low sequence number, not 0xc0.
     expect(decodeGeigerNotification(new Uint8Array([0x03, 0x0a, 0x00, 0xf4, 0x01, 0, 0]))).toBeNull();
     expect(decodeGeigerNotification(new Uint8Array([0x82, 0x01, 0x00, 0, 0, 0, 0]))).toBeNull();
-  });
-});
-
-describe("countRegisterDelta", () => {
-  it("differences successive readings", () => {
-    expect(countRegisterDelta(100, 137)).toBe(37);
-    expect(countRegisterDelta(100, 100)).toBe(0);
-  });
-
-  it("stays correct across the 16-bit wraparound", () => {
-    // 65530 → 4 is 10 counts, not a 65526-count drop.
-    expect(countRegisterDelta(65530, 4)).toBe(10);
-    expect(countRegisterDelta(65535, 0)).toBe(1);
   });
 });

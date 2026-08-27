@@ -11,7 +11,10 @@
  * 1. `requestDevice` with a `namePrefix` filter — this MUST be called from a
  *    user gesture, so `connect()` is only ever invoked from a button listener.
  * 2. Connect to the GATT server and grab the sensor service (channel 0 → service 1).
- * 3. Subscribe to the notify characteristic; responses arrive there.
+ * 3. Subscribe to the DEVICE service's notify characteristic. Commands go to the
+ *    sensor service, but the device answers on the device-level channel — this
+ *    is asymmetric, and reading the sensor service's notify characteristic
+ *    instead yields silence.
  * 4. Poll with a one-shot read command and match the response by opcode.
  *
  * ── Why polling ───────────────────────────────────────────────────────────────
@@ -38,6 +41,34 @@ import {
   readOneSampleCommand,
   toCommandBuffer,
 } from "./PascoProtocol.js";
+
+/**
+ * TEMPORARY diagnostic tracing, enabled with `?debugBluetooth=true`.
+ *
+ * Dumps every byte in both directions plus the discovered GATT layout, so the
+ * PS-3238's actual behaviour can be read off the console. Remove once the
+ * CountRate register question in GeigerCountSource is settled.
+ */
+const DEBUG_BLUETOOTH =
+  typeof window !== "undefined" && new URLSearchParams(window.location.search).get("debugBluetooth") === "true";
+
+function toHex(bytes: Uint8Array): string {
+  return Array.from(bytes, (byte) => byte.toString(16).padStart(2, "0")).join(" ");
+}
+
+let lastTraceTime = 0;
+
+function trace(label: string, detail: unknown = ""): void {
+  if (DEBUG_BLUETOOTH) {
+    const now = performance.now();
+    const sinceLast = lastTraceTime === 0 ? 0 : Math.round(now - lastTraceTime);
+    lastTraceTime = now;
+    // biome-ignore lint/style/noParameterAssign: temporary bring-up tracing
+    label = `+${String(sinceLast).padStart(4)}ms ${label}`;
+    // biome-ignore lint/suspicious/noConsole: temporary hardware bring-up tracing
+    console.log(`[ble] ${label}`, detail);
+  }
+}
 
 /** How long to wait for a device's response to a one-shot read, in ms. */
 const READ_TIMEOUT_MS = 2000;
@@ -96,7 +127,12 @@ export class GeigerCounterDevice {
       if (!value) {
         return;
       }
-      const sample = decodeGeigerNotification(new Uint8Array(value.buffer, value.byteOffset, value.byteLength));
+      const bytes = new Uint8Array(value.buffer, value.byteOffset, value.byteLength);
+      const sample = decodeGeigerNotification(bytes);
+      trace(
+        `notify sensor <- ${bytes.length}B: ${toHex(bytes)}`,
+        sample ? { decoded: sample, pendingRead: this.pendingRead !== null } : "(not a one-shot sample response)",
+      );
       if (sample && this.pendingRead) {
         const resolve = this.pendingRead;
         this.pendingRead = null;
@@ -164,7 +200,13 @@ export class GeigerCounterDevice {
     this.commandCharacteristic = await service.getCharacteristic(
       pascoUuid(GEIGER_SERVICE_ID, CHARACTERISTIC.SEND_COMMAND),
     );
-    this.notifyCharacteristic = await service.getCharacteristic(pascoUuid(GEIGER_SERVICE_ID, CHARACTERISTIC.RECEIVE));
+    // Responses come home on the DEVICE service, not the sensor service that
+    // the command was written to — confirmed against a PS-3238: a one-shot read
+    // written to 4a5c0001-0002 is answered on 4a5c0000-0003.
+    const deviceService = await server.getPrimaryService(pascoUuid(DEVICE_SERVICE_ID, CHARACTERISTIC.SERVICE));
+    this.notifyCharacteristic = await deviceService.getCharacteristic(
+      pascoUuid(DEVICE_SERVICE_ID, CHARACTERISTIC.RECEIVE),
+    );
 
     this.notifyCharacteristic.addEventListener("characteristicvaluechanged", this.handleNotification);
     await this.notifyCharacteristic.startNotifications();
@@ -172,6 +214,10 @@ export class GeigerCounterDevice {
     // A no-op write on the device service tells the sensor a host is present;
     // the Python library sends the same byte as its keepalive.
     await this.sendKeepalive(server);
+
+    if (DEBUG_BLUETOOTH) {
+      await this.traceGattLayout(server);
+    }
   }
 
   /**
@@ -198,7 +244,14 @@ export class GeigerCounterDevice {
       };
     });
 
-    await command.writeValueWithoutResponse(readOneSampleCommand(GEIGER_SAMPLE_BYTES));
+    const commandBytes = readOneSampleCommand(GEIGER_SAMPLE_BYTES);
+    trace(`write sensor -> ${toHex(new Uint8Array(commandBytes))}`);
+    try {
+      await command.writeValueWithoutResponse(commandBytes);
+    } catch (error) {
+      trace("write sensor FAILED", error);
+      throw error;
+    }
     return sample;
   }
 
@@ -224,6 +277,55 @@ export class GeigerCounterDevice {
 
     this.clearConnectionState();
     this.device = null;
+  }
+
+  /**
+   * TEMPORARY: logs every service/characteristic Web Bluetooth will expose, and
+   * taps the device service's notify characteristic so unsolicited packets —
+   * battery, status, streamed samples — show up too.
+   */
+  private async traceGattLayout(server: BluetoothRemoteGATTServer): Promise<void> {
+    for (const serviceUuid of OPTIONAL_SERVICE_UUIDS) {
+      let service: BluetoothRemoteGATTService;
+      try {
+        service = await server.getPrimaryService(serviceUuid);
+      } catch {
+        trace(`service ${serviceUuid} absent`);
+        continue;
+      }
+      const characteristics = await service.getCharacteristics();
+      trace(
+        `service ${serviceUuid}`,
+        characteristics.map((characteristic) => ({
+          uuid: characteristic.uuid,
+          read: characteristic.properties.read,
+          write: characteristic.properties.write,
+          writeNoResponse: characteristic.properties.writeWithoutResponse,
+          notify: characteristic.properties.notify,
+          indicate: characteristic.properties.indicate,
+        })),
+      );
+
+      // Tap anything that can notify, apart from the sensor characteristic the
+      // real read path already listens on.
+      for (const characteristic of characteristics) {
+        if (!characteristic.properties.notify || characteristic.uuid === this.notifyCharacteristic?.uuid) {
+          continue;
+        }
+        characteristic.addEventListener("characteristicvaluechanged", (event: Event) => {
+          const value = (event.target as BluetoothRemoteGATTCharacteristic).value;
+          if (value) {
+            const bytes = new Uint8Array(value.buffer, value.byteOffset, value.byteLength);
+            trace(`notify ${characteristic.uuid} <- ${bytes.length}B: ${toHex(bytes)}`);
+          }
+        });
+        try {
+          await characteristic.startNotifications();
+        } catch (error) {
+          trace(`startNotifications failed on ${characteristic.uuid}`, error);
+        }
+      }
+    }
   }
 
   /** Sends the device-service keepalive byte. */

@@ -66,7 +66,6 @@ export type SharedControlA11yStrings = {
   readonly stopButtonStringProperty: ReadOnlyProperty<string>;
   readonly clearButtonStringProperty: ReadOnlyProperty<string>;
   readonly exportButtonStringProperty: ReadOnlyProperty<string>;
-  readonly registerModeControlStringProperty: ReadOnlyProperty<string>;
 };
 
 /**

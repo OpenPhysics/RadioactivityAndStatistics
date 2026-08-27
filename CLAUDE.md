@@ -58,18 +58,23 @@ three model curves (a validated categorical trio) read against them. A
 four-colour set fails colour-vision separation in both profiles. Each curve also
 carries a dash pattern; keep it if you touch the colours.
 
-**The `CountRate` register interpretation is unverified against hardware.** See
-`GeigerCountSource`'s class comment. Both plausible modes are implemented and
-user-selectable, and the raw register is exposed for diagnosis. If someone
-confirms the real behaviour on a device, collapse this to the correct mode and
-delete the other — do not leave a guess baked in silently.
+**PASCO answers on a different service than it is asked.** The one-shot read is
+written to the sensor service's send characteristic, but the reply arrives on the
+*device* service's notify characteristic. Subscribe to the sensor service and you
+get silence from a connection that still reports itself healthy.
+
+**The `CountRate` register clears on read.** Confirmed on a PS-3238; each read
+returns counts since the previous read. `accumulate` therefore sums every
+reading and discards only the first, which flushes the backlog banked since
+power-on. Do not "optimise" it to skip readings equal to their predecessor — at
+10 Hz the register holds small integers, repeats are ordinary, and skipping them
+undercounts by roughly 15%.
 
 ## Query parameters
 
 | Parameter | Effect |
 |---|---|
 | `?showDiagnostics=true` | Show the raw count register and GM tube voltage in the source panel |
-| `?registerMode=cumulative\|perSampleWindow` | How the raw count register becomes a running total |
 
 Also surfaced in Preferences → Simulation.
 
@@ -81,9 +86,9 @@ a headless environment — `tests/common/hardware/PascoProtocol.test.ts` covers 
 wire format, and everything above the transport is exercised through the
 simulated source.
 
-To check the register mode on a real device: connect, enable diagnostics, and
-watch the raw register. Climbing monotonically → `cumulative`. Hovering near a
-small value → `perSampleWindow`.
+To sanity-check a real device: connect, enable diagnostics, and watch the tube
+voltage. It should read 500 V. Zero there means no sample is being decoded, not
+a flat tube — check that the notify subscription is still on the device service.
 
 ## Testing
 
