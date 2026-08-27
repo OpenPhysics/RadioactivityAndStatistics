@@ -39,10 +39,10 @@ export const CONTROL_PANEL_WIDTH = 225;
 
 // ── Charts (screen pixels) ────────────────────────────────────────────────────
 
-/** Plot area of the Lab screen's histogram. */
+/** Plot area of the histogram, shown on either screen. */
 export const HISTOGRAM_CHART_SIZE = { width: 380, height: 440 } as const;
 
-/** Plot area of the Intro screen's count-rate strip chart. */
+/** Plot area of the count-rate strip chart, shown on either screen. */
 export const RATE_CHART_SIZE = { width: 420, height: 330 } as const;
 
 /** Stroke width of plotted model curves. */

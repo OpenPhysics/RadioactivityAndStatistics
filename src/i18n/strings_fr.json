@@ -1,13 +1,11 @@
 {
   "title": "Radioactivité et statistiques",
   "screens": {
-    "intro": "Intro",
-    "lab": "Labo"
+    "simulation": "Simulation",
+    "device": "Appareil Bluetooth"
   },
   "source": {
     "title": "Source",
-    "simulated": "Simulée",
-    "geigerCounter": "Compteur Geiger",
     "activity": "Activité",
     "activityUnits": "coups/s",
     "connect": "Connecter",
@@ -74,41 +72,22 @@
     "axisTime": "Temps (s)",
     "axisRate": "Coups/s"
   },
+  "chartView": {
+    "title": "Affichage",
+    "histogram": "Histogramme",
+    "countRate": "Taux de comptage dans le temps"
+  },
   "a11y": {
-    "intro": {
+    "simulation": {
       "screenSummary": {
-        "playArea": "La zone de jeu affiche un taux de comptage en direct, un graphique du taux de comptage dans le temps et un tableau des mesures recueillies.",
-        "controlArea": "La zone de contrôle permet de choisir une source de comptage, de régler l'intervalle de comptage et la longueur de la série, de démarrer et d'arrêter l'enregistrement, d'exporter les données et de réinitialiser la simulation.",
-        "interactionHint": "Appuyez sur Enregistrer pour recueillir une série de mesures, puis lisez le taux de comptage et le tableau."
+        "playArea": "La zone de jeu affiche un histogramme ou un graphique du taux de comptage d'une source de comptage simulée, à côté d'un panneau de statistiques.",
+        "controlArea": "La zone de contrôle permet de régler l'activité de la source simulée, de choisir le graphique affiché, de régler l'intervalle de comptage et la longueur de la série, de démarrer et d'arrêter l'enregistrement, de choisir les courbes théoriques affichées, de régler la largeur de classe, d'exporter les données et de réinitialiser la simulation.",
+        "interactionHint": "Recueillez une série de mesures, puis basculez entre l'histogramme et le graphique du taux de comptage pour voir ce que les données montrent."
       },
       "currentDetails": "Aucune mesure n'a encore été recueillie.",
       "currentDetailsRecording": "Enregistrement en cours. {{count}} mesures recueillies jusqu'ici. Dernier taux de comptage : {{rate}} coups par seconde.",
       "currentDetailsCollected": "{{count}} mesures recueillies. Moyenne de {{mean}} coups par intervalle, écart-type de {{deviation}}, et la racine carrée de la moyenne vaut {{poisson}}.",
       "controls": {
-        "sourceRadioGroup": "Source de comptage",
-        "activitySlider": "Activité simulée en coups par seconde",
-        "connectButton": "Connecter un compteur Geiger par Bluetooth",
-        "disconnectButton": "Déconnecter le compteur Geiger",
-        "intervalControl": "Intervalle de comptage en secondes",
-        "samplesPerRunControl": "Nombre d'échantillons dans une série",
-        "continuousCheckbox": "Enregistrer en continu au lieu de s'arrêter après un nombre défini d'échantillons",
-        "recordButton": "Commencer l'enregistrement des mesures",
-        "stopButton": "Arrêter l'enregistrement des mesures",
-        "clearButton": "Effacer les mesures recueillies",
-        "exportButton": "Exporter les mesures recueillies en fichier CSV"
-      }
-    },
-    "lab": {
-      "screenSummary": {
-        "playArea": "La zone de jeu affiche un histogramme des mesures recueillies, avec des courbes de Poisson et gaussiennes facultatives par-dessus, à côté d'un panneau de statistiques.",
-        "controlArea": "La zone de contrôle permet de choisir une source de comptage, de régler l'intervalle de comptage et la longueur de la série, de démarrer et d'arrêter l'enregistrement, de choisir les courbes théoriques affichées, de régler la largeur de classe, d'exporter les données et de réinitialiser la simulation.",
-        "interactionHint": "Recueillez une série de mesures, puis comparez l'histogramme aux courbes de Poisson et gaussiennes."
-      },
-      "currentDetails": "Aucune mesure n'a encore été recueillie.",
-      "currentDetailsRecording": "Enregistrement en cours. {{count}} mesures recueillies jusqu'ici. Dernier taux de comptage : {{rate}} coups par seconde.",
-      "currentDetailsCollected": "{{count}} mesures recueillies. Moyenne de {{mean}} coups par intervalle, écart-type de {{deviation}}, et la racine carrée de la moyenne vaut {{poisson}}.",
-      "controls": {
-        "sourceRadioGroup": "Source de comptage",
         "activitySlider": "Activité simulée en coups par seconde",
         "connectButton": "Connecter un compteur Geiger par Bluetooth",
         "disconnectButton": "Déconnecter le compteur Geiger",
@@ -119,6 +98,35 @@
         "stopButton": "Arrêter l'enregistrement des mesures",
         "clearButton": "Effacer les mesures recueillies",
         "exportButton": "Exporter les mesures recueillies en fichier CSV",
+        "chartViewRadioGroup": "Choisir d'afficher l'histogramme ou le taux de comptage dans le temps",
+        "poissonCheckbox": "Afficher la prédiction de Poisson",
+        "gaussianPredictionCheckbox": "Afficher la prédiction gaussienne avec sigma égal à la racine carrée de la moyenne",
+        "gaussianFitCheckbox": "Afficher la gaussienne ajustée",
+        "autoBinWidthCheckbox": "Choisir automatiquement la largeur de classe de l'histogramme",
+        "binWidthControl": "Largeur de classe de l'histogramme en coups"
+      }
+    },
+    "device": {
+      "screenSummary": {
+        "playArea": "La zone de jeu affiche un histogramme ou un graphique du taux de comptage d'un vrai compteur Geiger connecté par Bluetooth, à côté d'un panneau de statistiques.",
+        "controlArea": "La zone de contrôle permet de connecter ou déconnecter un compteur Geiger Bluetooth, de choisir le graphique affiché, de régler l'intervalle de comptage et la longueur de la série, de démarrer et d'arrêter l'enregistrement, de choisir les courbes théoriques affichées, de régler la largeur de classe, d'exporter les données et de réinitialiser la simulation.",
+        "interactionHint": "Connectez un compteur Geiger, recueillez une série de mesures, puis basculez entre l'histogramme et le graphique du taux de comptage pour voir ce que les données montrent."
+      },
+      "currentDetails": "Aucune mesure n'a encore été recueillie.",
+      "currentDetailsRecording": "Enregistrement en cours. {{count}} mesures recueillies jusqu'ici. Dernier taux de comptage : {{rate}} coups par seconde.",
+      "currentDetailsCollected": "{{count}} mesures recueillies. Moyenne de {{mean}} coups par intervalle, écart-type de {{deviation}}, et la racine carrée de la moyenne vaut {{poisson}}.",
+      "controls": {
+        "activitySlider": "Activité simulée en coups par seconde",
+        "connectButton": "Connecter un compteur Geiger par Bluetooth",
+        "disconnectButton": "Déconnecter le compteur Geiger",
+        "intervalControl": "Intervalle de comptage en secondes",
+        "samplesPerRunControl": "Nombre d'échantillons dans une série",
+        "continuousCheckbox": "Enregistrer en continu au lieu de s'arrêter après un nombre défini d'échantillons",
+        "recordButton": "Commencer l'enregistrement des mesures",
+        "stopButton": "Arrêter l'enregistrement des mesures",
+        "clearButton": "Effacer les mesures recueillies",
+        "exportButton": "Exporter les mesures recueillies en fichier CSV",
+        "chartViewRadioGroup": "Choisir d'afficher l'histogramme ou le taux de comptage dans le temps",
         "poissonCheckbox": "Afficher la prédiction de Poisson",
         "gaussianPredictionCheckbox": "Afficher la prédiction gaussienne avec sigma égal à la racine carrée de la moyenne",
         "gaussianFitCheckbox": "Afficher la gaussienne ajustée",

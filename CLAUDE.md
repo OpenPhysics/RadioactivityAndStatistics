@@ -18,7 +18,8 @@ changing the acquisition or hardware layers.
 
 | File | Purpose |
 |---|---|
-| `src/common/model/RadioactivityModel.ts` | The shared acquisition model — sources, counting cycle, run, derived statistics. Both screens compose it |
+| `src/common/model/RadioactivityModel.ts` | The shared acquisition model — sources, counting cycle, run, derived statistics. Each screen's model locks it to one fixed source |
+| `src/common/model/RadioactivityScreenModel.ts` | Composes `RadioactivityModel` with the screen-level display state (chart view, curve visibility) both screens share; `SimulationModel`/`DeviceModel` just fix the source and the default chart |
 | `src/common/model/CountSource.ts` | The `TCountSource` contract: a monotonic running total. The reason hardware and simulated data share one code path |
 | `src/common/model/SimulatedCountSource.ts` | Poisson event generator (the default source, and the only one with a known λ) |
 | `src/common/model/GeigerCountSource.ts` | Hardware source: connection lifecycle, polling loop, register interpretation |
@@ -27,8 +28,9 @@ changing the acquisition or hardware layers.
 | `src/common/model/Statistics.ts` | Welford statistics, log-gamma, Poisson and Gaussian distributions |
 | `src/common/model/Histogram.ts` | Integer binning, bin-width choice, per-bin expected frequencies |
 | `src/common/model/GaussianFit.ts` | Levenberg–Marquardt fit with Poisson weighting |
-| `src/common/view/HistogramNode.ts` | Lab centrepiece: bars plus the three model curves |
-| `src/common/view/CountRateChartNode.ts` | Intro strip chart: rate against time, with the mean |
+| `src/common/view/HistogramNode.ts` | The histogram view: bars plus the three model curves |
+| `src/common/view/CountRateChartNode.ts` | The count-rate view: rate against time, with the mean |
+| `src/common/view/RadioactivityScreenView.ts` | The view shared by both screens; a chart-view switch chooses which of the above two is shown |
 | `src/RadioactivityAndStatisticsColors.ts` | All `ProfileColorProperty` instances, including the validated chart palette |
 | `src/RadioactivityAndStatisticsConstants.ts` | Layout, chart sizes, acquisition ranges, timing guards |
 

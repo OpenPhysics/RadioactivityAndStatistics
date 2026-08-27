@@ -4,10 +4,13 @@
  * Programmatic home-screen and navigation-bar icons, drawn on the standard PhET
  * 548 × 373 canvas using the sim's own colors so they follow the active profile.
  *
- * Each icon is a miniature of what its screen is about: the Intro icon is a
- * fluctuating count-rate trace about its mean, the Lab icon is a histogram with
- * a bell curve over it. They use the same colours as the real charts, so the
- * home screen previews what the screen actually looks like.
+ * Both screens can show either chart now, so the icons no longer distinguish
+ * "fluctuation" from "distribution" — instead each is a miniature of its
+ * screen's fixed source: the Simulation icon is a fluctuating count-rate
+ * trace, evoking the mock-up source's adjustable activity; the Device icon is
+ * a histogram with a bell curve, evoking the real counter's collected run.
+ * They use the same colours as the real charts, so the home screen previews
+ * what the screen actually looks like.
  */
 import { Shape } from "scenerystack/kite";
 import { Circle, Line, Node, Path, Rectangle } from "scenerystack/scenery";
@@ -33,13 +36,13 @@ function iconFrom(content: Node): ScreenIcon {
 }
 
 /**
- * Intro: a count rate scattering about its mean.
+ * Simulation: a count rate scattering about its mean.
  *
  * The sample heights are fixed rather than random so the icon is identical on
  * every launch — an icon that changed shape between sessions would read as a
  * different screen.
  */
-export function createIntroIcon(): ScreenIcon {
+export function createSimulationIcon(): ScreenIcon {
   const samples = [0.55, 0.78, 0.34, 0.62, 0.45, 0.86, 0.5, 0.28, 0.7, 0.4];
   const left = INSET;
   const right = W - INSET;
@@ -87,8 +90,8 @@ export function createIntroIcon(): ScreenIcon {
   );
 }
 
-/** Lab: a histogram of counts with the Poisson curve drawn over it. */
-export function createLabIcon(): ScreenIcon {
+/** Device: a histogram of counts with the Poisson curve drawn over it. */
+export function createDeviceIcon(): ScreenIcon {
   const bars = [0.12, 0.3, 0.62, 0.92, 0.78, 0.45, 0.2, 0.08];
   const left = INSET;
   const right = W - INSET;

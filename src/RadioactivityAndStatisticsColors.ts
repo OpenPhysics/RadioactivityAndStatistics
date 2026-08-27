@@ -136,7 +136,7 @@ const RadioactivityAndStatisticsColors = {
     projector: "#5b6b8c",
   }),
 
-  /** Count-rate trace on the Intro screen's strip chart (a single series). */
+  /** Count-rate trace on the count-rate strip chart (a single series). */
   countRateTraceColorProperty: new ProfileColorProperty(RadioactivityAndStatisticsNamespace, "countRateTrace", {
     default: "#3987e5",
     projector: "#2a78d6",

@@ -13,7 +13,7 @@ import { DerivedProperty, PatternStringProperty } from "scenerystack/axon";
 import { HBox, Node, Text, VBox } from "scenerystack/scenery";
 import { NumberControl, PhetFont } from "scenerystack/scenery-phet";
 import { Checkbox, RectangularPushButton } from "scenerystack/sun";
-import type { SharedControlA11yStrings } from "../../i18n/StringManager.js";
+import type { ScreenControlA11yStrings } from "../../i18n/StringManager.js";
 import { StringManager } from "../../i18n/StringManager.js";
 import RadioactivityAndStatisticsColors from "../../RadioactivityAndStatisticsColors.js";
 import {
@@ -31,7 +31,7 @@ import { downloadCsv } from "./downloadCsv.js";
 export class AcquisitionPanel extends RadioactivityAndStatisticsPanel {
   private readonly disposeAcquisitionPanel: () => void;
 
-  public constructor(model: RadioactivityModel, a11y: SharedControlA11yStrings) {
+  public constructor(model: RadioactivityModel, a11y: ScreenControlA11yStrings) {
     const stringManager = StringManager.getInstance();
     const strings = stringManager.getAcquisitionStrings();
     const readoutStrings = stringManager.getReadoutStrings();

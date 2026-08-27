@@ -17,7 +17,7 @@ import { type BooleanProperty, DerivedProperty, type TReadOnlyProperty } from "s
 import { Text, VBox } from "scenerystack/scenery";
 import { NumberControl, PhetFont } from "scenerystack/scenery-phet";
 import { Checkbox } from "scenerystack/sun";
-import type { LabControlA11yStrings } from "../../i18n/StringManager.js";
+import type { ScreenControlA11yStrings } from "../../i18n/StringManager.js";
 import { StringManager } from "../../i18n/StringManager.js";
 import RadioactivityAndStatisticsColors from "../../RadioactivityAndStatisticsColors.js";
 import { BIN_WIDTH_RANGE, CONTROL_PANEL_WIDTH } from "../../RadioactivityAndStatisticsConstants.js";
@@ -39,7 +39,7 @@ export type CurveVisibilityControls = {
 export class DistributionControlsPanel extends RadioactivityAndStatisticsPanel {
   private readonly disposeDistributionControlsPanel: () => void;
 
-  public constructor(model: RadioactivityModel, curves: CurveVisibilityControls, a11y: LabControlA11yStrings) {
+  public constructor(model: RadioactivityModel, curves: CurveVisibilityControls, a11y: ScreenControlA11yStrings) {
     const strings = StringManager.getInstance().getHistogramStrings();
 
     const title = new Text(strings.titleStringProperty, {

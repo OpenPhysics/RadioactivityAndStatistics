@@ -21,12 +21,12 @@ import "./brand.js";
 
 import { onReadyToLaunch, PreferencesModel, Sim } from "scenerystack/sim";
 import { Tandem } from "scenerystack/tandem";
+import { DeviceScreen } from "./device/DeviceScreen.js";
 import { StringManager } from "./i18n/StringManager.js";
-import { IntroScreen } from "./intro/IntroScreen.js";
-import { LabScreen } from "./lab/LabScreen.js";
 import { RadioactivityAndStatisticsPreferencesModel } from "./preferences/RadioactivityAndStatisticsPreferencesModel.js";
 import { RadioactivityAndStatisticsPreferencesNode } from "./preferences/RadioactivityAndStatisticsPreferencesNode.js";
 import RadioactivityAndStatisticsColors from "./RadioactivityAndStatisticsColors.js";
+import { SimulationScreen } from "./simulation/SimulationScreen.js";
 
 onReadyToLaunch(() => {
   const stringManager = StringManager.getInstance();
@@ -35,14 +35,14 @@ onReadyToLaunch(() => {
   const simPreferences = new RadioactivityAndStatisticsPreferencesModel(Tandem.ROOT.createTandem("preferences"));
 
   const screens = [
-    new IntroScreen(simPreferences, {
-      name: stringManager.getScreenNames().introStringProperty,
-      tandem: Tandem.ROOT.createTandem("introScreen"),
+    new SimulationScreen(simPreferences, {
+      name: stringManager.getScreenNames().simulationStringProperty,
+      tandem: Tandem.ROOT.createTandem("simulationScreen"),
       backgroundColorProperty: RadioactivityAndStatisticsColors.backgroundColorProperty,
     }),
-    new LabScreen(simPreferences, {
-      name: stringManager.getScreenNames().labStringProperty,
-      tandem: Tandem.ROOT.createTandem("labScreen"),
+    new DeviceScreen(simPreferences, {
+      name: stringManager.getScreenNames().deviceStringProperty,
+      tandem: Tandem.ROOT.createTandem("deviceScreen"),
       backgroundColorProperty: RadioactivityAndStatisticsColors.backgroundColorProperty,
     }),
   ];

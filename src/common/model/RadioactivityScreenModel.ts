@@ -1,23 +1,34 @@
 /**
- * LabModel.ts
+ * RadioactivityScreenModel.ts
  *
- * Model for the Lab screen: the distribution of the measurements, and how it
- * compares with theory.
- *
- * Adds only what the Intro screen has no use for — which theoretical curves are
- * drawn — on top of the shared {@link RadioactivityModel}. Everything about
- * collecting data, including the histogram and the Gaussian fit, is shared;
- * the Lab screen simply chooses to display it.
+ * Model shared by both screens: a {@link RadioactivityModel} locked to one
+ * counting source, plus the display choices that used to live on the Lab
+ * screen alone — which chart is shown, and which theoretical curves are drawn
+ * over the histogram. Both screens can show either chart now, so both need
+ * this state; only the fixed source tells the two screens apart.
  */
 
-import { BooleanProperty } from "scenerystack/axon";
+import { BooleanProperty, Property } from "scenerystack/axon";
 import type { TModel } from "scenerystack/joist";
-import { RadioactivityModel } from "../../common/model/RadioactivityModel.js";
 import type { RadioactivityAndStatisticsPreferencesModel } from "../../preferences/RadioactivityAndStatisticsPreferencesModel.js";
+import type { ChartViewTypeValue } from "./ChartViewType.js";
+import type { CountSourceTypeValue } from "./CountSource.js";
+import { RadioactivityModel } from "./RadioactivityModel.js";
 
-export class LabModel implements TModel {
+export type RadioactivityScreenModelOptions = {
+  /** The one source this screen ever counts from. */
+  readonly fixedSourceType: CountSourceTypeValue;
+
+  /** Which chart the screen opens on. */
+  readonly initialChartView: ChartViewTypeValue;
+};
+
+export class RadioactivityScreenModel implements TModel {
   /** Sources, counting cycle, collected run, and derived statistics. */
   public readonly acquisition: RadioactivityModel;
+
+  /** Which chart is currently shown: the histogram, or the count-rate trace. */
+  public readonly chartViewProperty: Property<ChartViewTypeValue>;
 
   /**
    * Whether the Poisson prediction is drawn, using λ = the measured mean.
@@ -38,17 +49,23 @@ export class LabModel implements TModel {
   /** Whether the least-squares best-fit Gaussian is drawn. */
   public readonly gaussianFitVisibleProperty = new BooleanProperty(false);
 
-  public constructor(preferences: RadioactivityAndStatisticsPreferencesModel) {
+  public constructor(
+    preferences: RadioactivityAndStatisticsPreferencesModel,
+    options: RadioactivityScreenModelOptions,
+  ) {
     this.acquisition = new RadioactivityModel({
+      fixedSourceType: options.fixedSourceType,
       geigerControls: {
         beepEnabledProperty: preferences.beepEnabledProperty,
         tubeVoltageProperty: preferences.tubeVoltageProperty,
       },
     });
+    this.chartViewProperty = new Property<ChartViewTypeValue>(options.initialChartView);
   }
 
   public reset(): void {
     this.acquisition.reset();
+    this.chartViewProperty.reset();
     this.poissonVisibleProperty.reset();
     this.gaussianPredictionVisibleProperty.reset();
     this.gaussianFitVisibleProperty.reset();
