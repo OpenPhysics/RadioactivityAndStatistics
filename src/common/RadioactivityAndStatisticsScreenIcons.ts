@@ -1,5 +1,5 @@
 /**
- * RadioactivityAndMeasurementsScreenIcons.ts
+ * RadioactivityAndStatisticsScreenIcons.ts
  *
  * Programmatic home-screen and navigation-bar icons, drawn on the standard PhET
  * 548 × 373 canvas using the sim's own colors so they follow the active profile.
@@ -12,7 +12,7 @@
 import { Shape } from "scenerystack/kite";
 import { Circle, Line, Node, Path, Rectangle } from "scenerystack/scenery";
 import { ScreenIcon } from "scenerystack/sim";
-import RadioactivityAndMeasurementsColors from "../RadioactivityAndMeasurementsColors.js";
+import RadioactivityAndStatisticsColors from "../RadioactivityAndStatisticsColors.js";
 
 const W = 548;
 const H = 373;
@@ -21,14 +21,14 @@ const H = 373;
 const INSET = 60;
 
 function background(): Rectangle {
-  return new Rectangle(0, 0, W, H, { fill: RadioactivityAndMeasurementsColors.backgroundColorProperty });
+  return new Rectangle(0, 0, W, H, { fill: RadioactivityAndStatisticsColors.backgroundColorProperty });
 }
 
 function iconFrom(content: Node): ScreenIcon {
   return new ScreenIcon(content, {
     maxIconWidthProportion: 1,
     maxIconHeightProportion: 1,
-    fill: RadioactivityAndMeasurementsColors.backgroundColorProperty,
+    fill: RadioactivityAndStatisticsColors.backgroundColorProperty,
   });
 }
 
@@ -65,19 +65,19 @@ export function createIntroIcon(): ScreenIcon {
       children: [
         background(),
         new Line(left, y(meanFraction), right, y(meanFraction), {
-          stroke: RadioactivityAndMeasurementsColors.chartAxisColorProperty,
+          stroke: RadioactivityAndStatisticsColors.chartAxisColorProperty,
           lineWidth: 5,
           lineDash: [16, 12],
         }),
         new Path(traceShape, {
-          stroke: RadioactivityAndMeasurementsColors.countRateTraceColorProperty,
+          stroke: RadioactivityAndStatisticsColors.countRateTraceColorProperty,
           lineWidth: 8,
           lineJoin: "round",
         }),
         ...samples.map(
           (fraction, index) =>
             new Circle(10, {
-              fill: RadioactivityAndMeasurementsColors.countRateTraceColorProperty,
+              fill: RadioactivityAndStatisticsColors.countRateTraceColorProperty,
               centerX: x(index),
               centerY: y(fraction),
             }),
@@ -100,7 +100,7 @@ export function createLabIcon(): ScreenIcon {
   const barNodes = bars.map((fraction, index) => {
     const height = (bottom - top) * fraction;
     return new Rectangle(left + index * barSpan + barGap / 2, bottom - height, barSpan - barGap, height, {
-      fill: RadioactivityAndMeasurementsColors.histogramBarColorProperty,
+      fill: RadioactivityAndStatisticsColors.histogramBarColorProperty,
     });
   });
 
@@ -129,7 +129,7 @@ export function createLabIcon(): ScreenIcon {
         background(),
         ...barNodes,
         new Path(curveShape, {
-          stroke: RadioactivityAndMeasurementsColors.poissonCurveColorProperty,
+          stroke: RadioactivityAndStatisticsColors.poissonCurveColorProperty,
           lineWidth: 8,
           lineJoin: "round",
         }),

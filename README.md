@@ -1,6 +1,6 @@
-# Radioactivity and Measurements
+# Radioactivity and Statistics
 
-[![CI](https://github.com/OpenPhysics/RadioactivityAndMeasurements/actions/workflows/ci.yml/badge.svg)](https://github.com/OpenPhysics/RadioactivityAndMeasurements/actions/workflows/ci.yml)
+[![CI](https://github.com/OpenPhysics/RadioactivityAndStatistics/actions/workflows/ci.yml/badge.svg)](https://github.com/OpenPhysics/RadioactivityAndStatistics/actions/workflows/ci.yml)
 
 A counting-statistics laboratory. Measure radioactive decay — from a simulated
 source or from a real **PASCO Wireless Geiger Counter (PS-3238)** over Web

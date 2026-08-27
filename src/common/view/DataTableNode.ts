@@ -20,11 +20,11 @@ import { toFixed } from "scenerystack/dot";
 import { Line, Node, Rectangle, Text, VBox } from "scenerystack/scenery";
 import { PhetFont } from "scenerystack/scenery-phet";
 import { StringManager } from "../../i18n/StringManager.js";
-import RadioactivityAndMeasurementsColors from "../../RadioactivityAndMeasurementsColors.js";
-import { TABLE_ROW_HEIGHT, TABLE_VISIBLE_ROWS, TABLE_WIDTH } from "../../RadioactivityAndMeasurementsConstants.js";
+import RadioactivityAndStatisticsColors from "../../RadioactivityAndStatisticsColors.js";
+import { TABLE_ROW_HEIGHT, TABLE_VISIBLE_ROWS, TABLE_WIDTH } from "../../RadioactivityAndStatisticsConstants.js";
 import { type CountSample, countRate } from "../model/CountSample.js";
 import type { RadioactivityModel } from "../model/RadioactivityModel.js";
-import { RadioactivityAndMeasurementsPanel } from "../RadioactivityAndMeasurementsPanel.js";
+import { RadioactivityAndStatisticsPanel } from "../RadioactivityAndStatisticsPanel.js";
 
 /** Left edge of each column, as a fraction of the table width. */
 const COLUMN_FRACTIONS = [0.02, 0.26, 0.55, 0.99] as const;
@@ -38,7 +38,7 @@ type TableRow = {
   readonly cells: readonly Text[];
 };
 
-export class DataTableNode extends RadioactivityAndMeasurementsPanel {
+export class DataTableNode extends RadioactivityAndStatisticsPanel {
   private readonly rows: readonly TableRow[];
   private readonly emptyMessage: Text;
   private readonly disposeDataTableNode: () => void;
@@ -48,7 +48,7 @@ export class DataTableNode extends RadioactivityAndMeasurementsPanel {
 
     const title = new Text(strings.titleStringProperty, {
       font: new PhetFont({ size: 15, weight: "bold" }),
-      fill: RadioactivityAndMeasurementsColors.textColorProperty,
+      fill: RadioactivityAndStatisticsColors.textColorProperty,
     });
 
     // ── Header ────────────────────────────────────────────────────────────────
@@ -63,7 +63,7 @@ export class DataTableNode extends RadioactivityAndMeasurementsPanel {
         (property, column) =>
           new Text(property, {
             font: new PhetFont({ size: 11, weight: "bold" }),
-            fill: RadioactivityAndMeasurementsColors.secondaryTextColorProperty,
+            fill: RadioactivityAndStatisticsColors.secondaryTextColorProperty,
             maxWidth: TABLE_WIDTH * 0.28,
             ...positionFor(column),
           }),
@@ -71,7 +71,7 @@ export class DataTableNode extends RadioactivityAndMeasurementsPanel {
     });
 
     const headerRule = new Line(0, 0, TABLE_WIDTH, 0, {
-      stroke: RadioactivityAndMeasurementsColors.tableRuleColorProperty,
+      stroke: RadioactivityAndStatisticsColors.tableRuleColorProperty,
       lineWidth: 1,
     });
 
@@ -83,14 +83,14 @@ export class DataTableNode extends RadioactivityAndMeasurementsPanel {
 
       // Alternating stripes give the eye something to track along a wide row.
       const stripe = new Rectangle(0, y, TABLE_WIDTH, TABLE_ROW_HEIGHT, {
-        fill: rowIndex % 2 === 0 ? RadioactivityAndMeasurementsColors.tableStripeColorProperty : null,
+        fill: rowIndex % 2 === 0 ? RadioactivityAndStatisticsColors.tableStripeColorProperty : null,
       });
 
       const cells = COLUMN_FRACTIONS.map(
         (_, column) =>
           new Text("", {
             font: new PhetFont(11),
-            fill: RadioactivityAndMeasurementsColors.textColorProperty,
+            fill: RadioactivityAndStatisticsColors.textColorProperty,
             maxWidth: TABLE_WIDTH * 0.28,
             ...positionFor(column, y + TABLE_ROW_HEIGHT / 2),
           }),
@@ -104,7 +104,7 @@ export class DataTableNode extends RadioactivityAndMeasurementsPanel {
 
     const emptyMessage = new Text(strings.emptyStringProperty, {
       font: new PhetFont(12),
-      fill: RadioactivityAndMeasurementsColors.secondaryTextColorProperty,
+      fill: RadioactivityAndStatisticsColors.secondaryTextColorProperty,
       maxWidth: TABLE_WIDTH,
       centerY: (TABLE_VISIBLE_ROWS * TABLE_ROW_HEIGHT) / 2,
       x: 0,

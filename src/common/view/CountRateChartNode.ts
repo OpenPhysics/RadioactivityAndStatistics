@@ -29,8 +29,8 @@ import { Orientation } from "scenerystack/phet-core";
 import { HBox, Line, Node, type ProfileColorProperty, Text, VBox } from "scenerystack/scenery";
 import { PhetFont } from "scenerystack/scenery-phet";
 import { StringManager } from "../../i18n/StringManager.js";
-import RadioactivityAndMeasurementsColors from "../../RadioactivityAndMeasurementsColors.js";
-import { CURVE_LINE_WIDTH, RATE_CHART_SIZE } from "../../RadioactivityAndMeasurementsConstants.js";
+import RadioactivityAndStatisticsColors from "../../RadioactivityAndStatisticsColors.js";
+import { CURVE_LINE_WIDTH, RATE_CHART_SIZE } from "../../RadioactivityAndStatisticsConstants.js";
 import { countRate } from "../model/CountSample.js";
 import type { RadioactivityModel } from "../model/RadioactivityModel.js";
 import { chooseTickSpacing } from "./chartTicks.js";
@@ -75,34 +75,34 @@ export class CountRateChartNode extends VBox {
     });
 
     const chartRectangle = new ChartRectangle(chartTransform, {
-      fill: RadioactivityAndMeasurementsColors.chartSurfaceColorProperty,
-      stroke: RadioactivityAndMeasurementsColors.chartBorderColorProperty,
+      fill: RadioactivityAndStatisticsColors.chartSurfaceColorProperty,
+      stroke: RadioactivityAndStatisticsColors.chartBorderColorProperty,
       cornerXRadius: 3,
       cornerYRadius: 3,
     });
 
     const gridOptions = {
-      stroke: RadioactivityAndMeasurementsColors.chartGridColorProperty,
+      stroke: RadioactivityAndStatisticsColors.chartGridColorProperty,
       lineWidth: 1,
     };
     const xGridLines = new GridLineSet(chartTransform, Orientation.HORIZONTAL, 5, gridOptions);
     const yGridLines = new GridLineSet(chartTransform, Orientation.VERTICAL, 10, gridOptions);
 
     const meanPlot = new LinePlot(chartTransform, [], {
-      stroke: RadioactivityAndMeasurementsColors.chartAxisColorProperty,
+      stroke: RadioactivityAndStatisticsColors.chartAxisColorProperty,
       lineWidth: CURVE_LINE_WIDTH,
       lineDash: MEAN_LINE_DASH,
     });
 
     const tracePlot = new LinePlot(chartTransform, [], {
-      stroke: RadioactivityAndMeasurementsColors.countRateTraceColorProperty,
+      stroke: RadioactivityAndStatisticsColors.countRateTraceColorProperty,
       lineWidth: CURVE_LINE_WIDTH,
     });
 
     // Markers make individual measurements countable at short runs, where the
     // trace alone reads as one continuous signal rather than N discrete samples.
     const pointPlot = new ScatterPlot(chartTransform, [], {
-      fill: RadioactivityAndMeasurementsColors.countRateTraceColorProperty,
+      fill: RadioactivityAndStatisticsColors.countRateTraceColorProperty,
       radius: 2.5,
     });
 
@@ -112,7 +112,7 @@ export class CountRateChartNode extends VBox {
     });
 
     const axisOptions = {
-      stroke: RadioactivityAndMeasurementsColors.chartAxisColorProperty,
+      stroke: RadioactivityAndStatisticsColors.chartAxisColorProperty,
       lineWidth: 1,
     };
     const tickLabelOptions = {
@@ -120,7 +120,7 @@ export class CountRateChartNode extends VBox {
       createLabel: (value: number) =>
         new Text(formatTick(value), {
           font: new PhetFont(11),
-          fill: RadioactivityAndMeasurementsColors.chartAxisColorProperty,
+          fill: RadioactivityAndStatisticsColors.chartAxisColorProperty,
         }),
     };
 
@@ -140,7 +140,7 @@ export class CountRateChartNode extends VBox {
 
     const axisTitleOptions = {
       font: new PhetFont(12),
-      fill: RadioactivityAndMeasurementsColors.secondaryTextColorProperty,
+      fill: RadioactivityAndStatisticsColors.secondaryTextColorProperty,
     };
     const yAxisTitle = new Text(strings.axisRateStringProperty, { ...axisTitleOptions, rotation: -Math.PI / 2 });
     const xAxisTitle = new Text(strings.axisTimeStringProperty, axisTitleOptions);
@@ -148,10 +148,10 @@ export class CountRateChartNode extends VBox {
     const legend = new HBox({
       spacing: 14,
       children: [
-        legendEntry(strings.axisRateStringProperty, RadioactivityAndMeasurementsColors.countRateTraceColorProperty, []),
+        legendEntry(strings.axisRateStringProperty, RadioactivityAndStatisticsColors.countRateTraceColorProperty, []),
         legendEntry(
           statisticsStrings.meanStringProperty,
-          RadioactivityAndMeasurementsColors.chartAxisColorProperty,
+          RadioactivityAndStatisticsColors.chartAxisColorProperty,
           MEAN_LINE_DASH,
         ),
       ],
@@ -255,7 +255,7 @@ function legendEntry(
       new Line(0, 0, 22, 0, { stroke: colorProperty, lineWidth: CURVE_LINE_WIDTH, lineDash }),
       new Text(labelProperty, {
         font: new PhetFont(11),
-        fill: RadioactivityAndMeasurementsColors.secondaryTextColorProperty,
+        fill: RadioactivityAndStatisticsColors.secondaryTextColorProperty,
         maxWidth: 150,
       }),
     ],

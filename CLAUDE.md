@@ -1,4 +1,4 @@
-# CLAUDE.md — Radioactivity and Measurements
+# CLAUDE.md — Radioactivity and Statistics
 
 Sim-specific context for AI assistants. General SceneryStack guidance:
 [OpenPhysics/.github/CLAUDE.md](https://github.com/OpenPhysics/.github/blob/main/CLAUDE.md).
@@ -29,8 +29,8 @@ changing the acquisition or hardware layers.
 | `src/common/model/GaussianFit.ts` | Levenberg–Marquardt fit with Poisson weighting |
 | `src/common/view/HistogramNode.ts` | Lab centrepiece: bars plus the three model curves |
 | `src/common/view/CountRateChartNode.ts` | Intro strip chart: rate against time, with the mean |
-| `src/RadioactivityAndMeasurementsColors.ts` | All `ProfileColorProperty` instances, including the validated chart palette |
-| `src/RadioactivityAndMeasurementsConstants.ts` | Layout, chart sizes, acquisition ranges, timing guards |
+| `src/RadioactivityAndStatisticsColors.ts` | All `ProfileColorProperty` instances, including the validated chart palette |
+| `src/RadioactivityAndStatisticsConstants.ts` | Layout, chart sizes, acquisition ranges, timing guards |
 
 ## Things that will bite
 

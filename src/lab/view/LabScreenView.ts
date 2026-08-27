@@ -17,18 +17,14 @@ import { type EmptySelfOptions, optionize } from "scenerystack/phet-core";
 import { AlignBox, Node, VBox } from "scenerystack/scenery";
 import { ResetAllButton } from "scenerystack/scenery-phet";
 import { ScreenView, type ScreenViewOptions } from "scenerystack/sim";
-import { FLAT_RESET_ALL_BUTTON_OPTIONS } from "../../common/RadioactivityAndMeasurementsButtonOptions.js";
+import { FLAT_RESET_ALL_BUTTON_OPTIONS } from "../../common/RadioactivityAndStatisticsButtonOptions.js";
 import { AcquisitionPanel } from "../../common/view/AcquisitionPanel.js";
 import { DistributionControlsPanel } from "../../common/view/DistributionControlsPanel.js";
 import { HistogramNode } from "../../common/view/HistogramNode.js";
 import { SourcePanel } from "../../common/view/SourcePanel.js";
 import { StatisticsPanel } from "../../common/view/StatisticsPanel.js";
 import { StringManager } from "../../i18n/StringManager.js";
-import {
-  CENTRE_COLUMN_PADDING,
-  PANEL_SPACING,
-  SCREEN_VIEW_MARGIN,
-} from "../../RadioactivityAndMeasurementsConstants.js";
+import { CENTRE_COLUMN_PADDING, PANEL_SPACING, SCREEN_VIEW_MARGIN } from "../../RadioactivityAndStatisticsConstants.js";
 import type { LabModel } from "../model/LabModel.js";
 import { LabScreenSummaryContent } from "./LabScreenSummaryContent.js";
 

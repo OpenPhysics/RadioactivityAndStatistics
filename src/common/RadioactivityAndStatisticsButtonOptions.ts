@@ -1,5 +1,5 @@
 /**
- * RadioactivityAndMeasurementsButtonOptions.ts
+ * RadioactivityAndStatisticsButtonOptions.ts
  *
  * Shared flat button appearance for the sim. Rectangular and round push buttons
  * default to SceneryStack's 3-D appearance; pass these options (or spread them
@@ -8,24 +8,24 @@
 
 import type { PlayPauseStepButtonGroupOptions, TimeControlNodeOptions } from "scenerystack/scenery-phet";
 import { ButtonNode, type ComboBoxOptions } from "scenerystack/sun";
-import RadioactivityAndMeasurementsColors from "../RadioactivityAndMeasurementsColors.js";
+import RadioactivityAndStatisticsColors from "../RadioactivityAndStatisticsColors.js";
 
 export const FLAT_BUTTON_APPEARANCE_OPTIONS = {
   buttonAppearanceStrategy: ButtonNode.FlatAppearanceStrategy,
 } as const;
 
 /** Text on flat push buttons and combo-box items (always on a light control surface). */
-export const LIGHT_SURFACE_TEXT_FILL = RadioactivityAndMeasurementsColors.controlSurfaceTextColorProperty;
+export const LIGHT_SURFACE_TEXT_FILL = RadioactivityAndStatisticsColors.controlSurfaceTextColorProperty;
 
 /**
  * Combo-box chrome for panels. Item labels must use {@link LIGHT_SURFACE_TEXT_FILL}, not
- * {@link RadioactivityAndMeasurementsColors.textColorProperty} — that color is for labels on the dark panel fill.
+ * {@link RadioactivityAndStatisticsColors.textColorProperty} — that color is for labels on the dark panel fill.
  */
 export const RADIOACTIVITY_AND_MEASUREMENTS_COMBO_BOX_OPTIONS = {
-  buttonFill: RadioactivityAndMeasurementsColors.controlSurfaceColorProperty,
-  listFill: RadioactivityAndMeasurementsColors.controlSurfaceColorProperty,
-  buttonStroke: RadioactivityAndMeasurementsColors.panelBorderColorProperty,
-  listStroke: RadioactivityAndMeasurementsColors.panelBorderColorProperty,
+  buttonFill: RadioactivityAndStatisticsColors.controlSurfaceColorProperty,
+  listFill: RadioactivityAndStatisticsColors.controlSurfaceColorProperty,
+  buttonStroke: RadioactivityAndStatisticsColors.panelBorderColorProperty,
+  listStroke: RadioactivityAndStatisticsColors.panelBorderColorProperty,
 } satisfies Pick<ComboBoxOptions, "buttonFill" | "listFill" | "buttonStroke" | "listStroke">;
 
 /** Options for RectangularPushButton and NumberControl arrow buttons. */
@@ -38,7 +38,7 @@ export const FLAT_RECTANGULAR_BUTTON_OPTIONS = FLAT_BUTTON_APPEARANCE_OPTIONS;
  */
 export const FLAT_PANEL_PUSH_BUTTON_OPTIONS = {
   ...FLAT_BUTTON_APPEARANCE_OPTIONS,
-  baseColor: RadioactivityAndMeasurementsColors.controlSurfaceColorProperty,
+  baseColor: RadioactivityAndStatisticsColors.controlSurfaceColorProperty,
 } as const;
 
 /** Options for ResetAllButton (extends RoundPushButton). */
@@ -57,6 +57,6 @@ export const FLAT_PLAY_PAUSE_STEP_BUTTON_OPTIONS = {
  */
 export const TIME_CONTROL_SPEED_RADIO_OPTIONS = {
   speedRadioButtonGroupOptions: {
-    labelOptions: { fill: RadioactivityAndMeasurementsColors.textColorProperty },
+    labelOptions: { fill: RadioactivityAndStatisticsColors.textColorProperty },
   },
 } satisfies Pick<TimeControlNodeOptions, "speedRadioButtonGroupOptions">;

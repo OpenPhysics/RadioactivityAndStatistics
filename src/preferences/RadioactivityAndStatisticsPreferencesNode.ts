@@ -1,9 +1,9 @@
 /**
- * RadioactivityAndMeasurementsPreferencesNode.ts
+ * RadioactivityAndStatisticsPreferencesNode.ts
  *
  * Custom preferences UI shown in Preferences → Simulation. Controls are bound
- * to RadioactivityAndMeasurementsPreferencesModel Properties (whose initial values come from
- * radioactivityAndMeasurementsQueryParameters).
+ * to RadioactivityAndStatisticsPreferencesModel Properties (whose initial values come from
+ * radioactivityAndStatisticsQueryParameters).
  */
 
 import { Range } from "scenerystack/dot";
@@ -13,12 +13,12 @@ import { Checkbox } from "scenerystack/sun";
 import type { Tandem } from "scenerystack/tandem";
 import { TUBE_VOLTAGE_CONTROL_RANGE } from "../common/hardware/PascoProtocol.js";
 import { StringManager } from "../i18n/StringManager.js";
-import RadioactivityAndMeasurementsColors from "../RadioactivityAndMeasurementsColors.js";
-import RadioactivityAndMeasurementsNamespace from "../RadioactivityAndMeasurementsNamespace.js";
-import type { RadioactivityAndMeasurementsPreferencesModel } from "./RadioactivityAndMeasurementsPreferencesModel.js";
+import RadioactivityAndStatisticsColors from "../RadioactivityAndStatisticsColors.js";
+import RadioactivityAndStatisticsNamespace from "../RadioactivityAndStatisticsNamespace.js";
+import type { RadioactivityAndStatisticsPreferencesModel } from "./RadioactivityAndStatisticsPreferencesModel.js";
 
-export class RadioactivityAndMeasurementsPreferencesNode extends VBox {
-  public constructor(preferencesModel: RadioactivityAndMeasurementsPreferencesModel, tandem?: Tandem) {
+export class RadioactivityAndStatisticsPreferencesNode extends VBox {
+  public constructor(preferencesModel: RadioactivityAndStatisticsPreferencesModel, tandem?: Tandem) {
     const prefStrings = StringManager.getInstance().getPreferences();
 
     // The Preferences dialog is always white, so use the dark "light control surface"
@@ -26,24 +26,24 @@ export class RadioactivityAndMeasurementsPreferencesNode extends VBox {
     // (which is near-white in default mode and would be invisible on the white dialog).
     const header = new Text(prefStrings.titleStringProperty, {
       font: new PhetFont({ size: 18, weight: "bold" }),
-      fill: RadioactivityAndMeasurementsColors.controlSurfaceTextColorProperty,
+      fill: RadioactivityAndStatisticsColors.controlSurfaceTextColorProperty,
     });
 
     const labelOptions = {
       font: new PhetFont(14),
-      fill: RadioactivityAndMeasurementsColors.controlSurfaceTextColorProperty,
+      fill: RadioactivityAndStatisticsColors.controlSurfaceTextColorProperty,
       maxWidth: 420,
     };
 
     const descriptionOptions = {
       font: new PhetFont(12),
-      fill: RadioactivityAndMeasurementsColors.controlSurfaceTextColorProperty,
+      fill: RadioactivityAndStatisticsColors.controlSurfaceTextColorProperty,
       maxWidth: 460,
     };
 
     const checkboxOptions = {
-      checkboxColor: RadioactivityAndMeasurementsColors.controlSurfaceTextColorProperty,
-      checkboxColorBackground: RadioactivityAndMeasurementsColors.controlSurfaceColorProperty,
+      checkboxColor: RadioactivityAndStatisticsColors.controlSurfaceTextColorProperty,
+      checkboxColorBackground: RadioactivityAndStatisticsColors.controlSurfaceColorProperty,
       spacing: 8,
     };
 
@@ -83,7 +83,7 @@ export class RadioactivityAndMeasurementsPreferencesNode extends VBox {
         }),
         titleNodeOptions: {
           font: new PhetFont(14),
-          fill: RadioactivityAndMeasurementsColors.controlSurfaceTextColorProperty,
+          fill: RadioactivityAndStatisticsColors.controlSurfaceTextColorProperty,
           maxWidth: 280,
         },
         numberDisplayOptions: {
@@ -91,11 +91,11 @@ export class RadioactivityAndMeasurementsPreferencesNode extends VBox {
           decimalPlaces: 0,
           textOptions: {
             font: new PhetFont(14),
-            fill: RadioactivityAndMeasurementsColors.controlSurfaceTextColorProperty,
+            fill: RadioactivityAndStatisticsColors.controlSurfaceTextColorProperty,
           },
         },
         sliderOptions: {
-          trackFillEnabled: RadioactivityAndMeasurementsColors.controlSurfaceTextColorProperty,
+          trackFillEnabled: RadioactivityAndStatisticsColors.controlSurfaceTextColorProperty,
         },
         accessibleName: prefStrings.tubeVoltageStringProperty,
         ...(tandem && { tandem: tandem.createTandem("tubeVoltageControl") }),
@@ -120,7 +120,7 @@ export class RadioactivityAndMeasurementsPreferencesNode extends VBox {
   }
 }
 
-RadioactivityAndMeasurementsNamespace.register(
-  "RadioactivityAndMeasurementsPreferencesNode",
-  RadioactivityAndMeasurementsPreferencesNode,
+RadioactivityAndStatisticsNamespace.register(
+  "RadioactivityAndStatisticsPreferencesNode",
+  RadioactivityAndStatisticsPreferencesNode,
 );

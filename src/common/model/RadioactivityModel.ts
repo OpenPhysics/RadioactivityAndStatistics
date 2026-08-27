@@ -31,7 +31,7 @@ import {
   MAXIMUM_INTERVALS_PER_FRAME,
   MAXIMUM_STEP_DT,
   SAMPLES_PER_RUN_RANGE,
-} from "../../RadioactivityAndMeasurementsConstants.js";
+} from "../../RadioactivityAndStatisticsConstants.js";
 import type { CountSample } from "./CountSample.js";
 import { CountSourceType, type CountSourceTypeValue, type TCountSource } from "./CountSource.js";
 import { fitGaussian, type GaussianFitResult } from "./GaussianFit.js";

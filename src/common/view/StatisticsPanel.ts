@@ -19,10 +19,10 @@ import { toFixed } from "scenerystack/dot";
 import { GridBox, Line, type Node, Text, VBox } from "scenerystack/scenery";
 import { PhetFont } from "scenerystack/scenery-phet";
 import { StringManager } from "../../i18n/StringManager.js";
-import RadioactivityAndMeasurementsColors from "../../RadioactivityAndMeasurementsColors.js";
-import { CONTROL_PANEL_WIDTH } from "../../RadioactivityAndMeasurementsConstants.js";
+import RadioactivityAndStatisticsColors from "../../RadioactivityAndStatisticsColors.js";
+import { CONTROL_PANEL_WIDTH } from "../../RadioactivityAndStatisticsConstants.js";
 import type { RadioactivityModel } from "../model/RadioactivityModel.js";
-import { RadioactivityAndMeasurementsPanel } from "../RadioactivityAndMeasurementsPanel.js";
+import { RadioactivityAndStatisticsPanel } from "../RadioactivityAndStatisticsPanel.js";
 
 /** Decimal places for statistics; counting data rarely justifies more. */
 const STATISTIC_DECIMALS = 2;
@@ -30,7 +30,7 @@ const STATISTIC_DECIMALS = 2;
 /** Usable width inside the panel, once its margins are taken out. */
 const CONTENT_WIDTH = CONTROL_PANEL_WIDTH - 24;
 
-export class StatisticsPanel extends RadioactivityAndMeasurementsPanel {
+export class StatisticsPanel extends RadioactivityAndStatisticsPanel {
   private readonly disposeStatisticsPanel: () => void;
 
   public constructor(model: RadioactivityModel) {
@@ -62,13 +62,13 @@ export class StatisticsPanel extends RadioactivityAndMeasurementsPanel {
     ): void => {
       const label = new Text(labelProperty, {
         font: new PhetFont(13),
-        fill: RadioactivityAndMeasurementsColors.secondaryTextColorProperty,
+        fill: RadioactivityAndStatisticsColors.secondaryTextColorProperty,
         maxWidth: CONTENT_WIDTH * 0.62,
         layoutOptions: { column: 0, row: rowIndex, xAlign: "left" },
       });
       const value = new Text(textProperty, {
         font: new PhetFont({ size: 14, weight: emphasized ? "bold" : "normal" }),
-        fill: RadioactivityAndMeasurementsColors.textColorProperty,
+        fill: RadioactivityAndStatisticsColors.textColorProperty,
         layoutOptions: { column: 1, row: rowIndex, xAlign: "right" },
       });
       rows.push(label, value);
@@ -116,11 +116,11 @@ export class StatisticsPanel extends RadioactivityAndMeasurementsPanel {
 
     const title = new Text(strings.titleStringProperty, {
       font: new PhetFont({ size: 15, weight: "bold" }),
-      fill: RadioactivityAndMeasurementsColors.textColorProperty,
+      fill: RadioactivityAndStatisticsColors.textColorProperty,
     });
 
     const rule = new Line(0, 0, CONTENT_WIDTH, 0, {
-      stroke: RadioactivityAndMeasurementsColors.tableRuleColorProperty,
+      stroke: RadioactivityAndStatisticsColors.tableRuleColorProperty,
       lineWidth: 1,
     });
 

@@ -34,7 +34,7 @@ const DECIMAL_PLACES = 4;
 export function samplesToCsv(samples: readonly CountSample[], context: ExportContext): string {
   const { statistics } = context;
   const lines: string[] = [
-    `# Radioactivity and Measurements`,
+    `# Radioactivity and Statistics`,
     `# Source,${escapeField(context.sourceDescription)}`,
     `# Counting interval (s),${context.intervalSeconds}`,
     `# Samples,${statistics.sampleCount}`,

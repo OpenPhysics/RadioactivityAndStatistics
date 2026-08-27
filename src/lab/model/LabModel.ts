@@ -13,7 +13,7 @@
 import { BooleanProperty } from "scenerystack/axon";
 import type { TModel } from "scenerystack/joist";
 import { RadioactivityModel } from "../../common/model/RadioactivityModel.js";
-import type { RadioactivityAndMeasurementsPreferencesModel } from "../../preferences/RadioactivityAndMeasurementsPreferencesModel.js";
+import type { RadioactivityAndStatisticsPreferencesModel } from "../../preferences/RadioactivityAndStatisticsPreferencesModel.js";
 
 export class LabModel implements TModel {
   /** Sources, counting cycle, collected run, and derived statistics. */
@@ -38,7 +38,7 @@ export class LabModel implements TModel {
   /** Whether the least-squares best-fit Gaussian is drawn. */
   public readonly gaussianFitVisibleProperty = new BooleanProperty(false);
 
-  public constructor(preferences: RadioactivityAndMeasurementsPreferencesModel) {
+  public constructor(preferences: RadioactivityAndStatisticsPreferencesModel) {
     this.acquisition = new RadioactivityModel({
       geigerControls: {
         beepEnabledProperty: preferences.beepEnabledProperty,

@@ -15,23 +15,20 @@ import { NumberControl, PhetFont } from "scenerystack/scenery-phet";
 import { Checkbox, RectangularPushButton } from "scenerystack/sun";
 import type { SharedControlA11yStrings } from "../../i18n/StringManager.js";
 import { StringManager } from "../../i18n/StringManager.js";
-import RadioactivityAndMeasurementsColors from "../../RadioactivityAndMeasurementsColors.js";
+import RadioactivityAndStatisticsColors from "../../RadioactivityAndStatisticsColors.js";
 import {
   CONTROL_PANEL_WIDTH,
   COUNTING_INTERVAL_RANGE,
   SAMPLES_PER_RUN_RANGE,
-} from "../../RadioactivityAndMeasurementsConstants.js";
+} from "../../RadioactivityAndStatisticsConstants.js";
 import { createExportFilename, samplesToCsv } from "../model/csvExport.js";
 import type { RadioactivityModel } from "../model/RadioactivityModel.js";
-import {
-  FLAT_PANEL_PUSH_BUTTON_OPTIONS,
-  LIGHT_SURFACE_TEXT_FILL,
-} from "../RadioactivityAndMeasurementsButtonOptions.js";
-import { RadioactivityAndMeasurementsPanel } from "../RadioactivityAndMeasurementsPanel.js";
+import { FLAT_PANEL_PUSH_BUTTON_OPTIONS, LIGHT_SURFACE_TEXT_FILL } from "../RadioactivityAndStatisticsButtonOptions.js";
+import { RadioactivityAndStatisticsPanel } from "../RadioactivityAndStatisticsPanel.js";
 import { SIM_CHECKBOX_OPTIONS, SIM_NUMBER_CONTROL_OPTIONS } from "../SimControlOptions.js";
 import { downloadCsv } from "./downloadCsv.js";
 
-export class AcquisitionPanel extends RadioactivityAndMeasurementsPanel {
+export class AcquisitionPanel extends RadioactivityAndStatisticsPanel {
   private readonly disposeAcquisitionPanel: () => void;
 
   public constructor(model: RadioactivityModel, a11y: SharedControlA11yStrings) {
@@ -42,12 +39,12 @@ export class AcquisitionPanel extends RadioactivityAndMeasurementsPanel {
 
     const title = new Text(strings.titleStringProperty, {
       font: new PhetFont({ size: 15, weight: "bold" }),
-      fill: RadioactivityAndMeasurementsColors.textColorProperty,
+      fill: RadioactivityAndStatisticsColors.textColorProperty,
     });
 
     const titleNodeOptions = {
       font: new PhetFont(13),
-      fill: RadioactivityAndMeasurementsColors.textColorProperty,
+      fill: RadioactivityAndStatisticsColors.textColorProperty,
       maxWidth: CONTROL_PANEL_WIDTH - 40,
     };
 
@@ -89,7 +86,7 @@ export class AcquisitionPanel extends RadioactivityAndMeasurementsPanel {
       model.isContinuousProperty,
       new Text(strings.continuousStringProperty, {
         font: new PhetFont(13),
-        fill: RadioactivityAndMeasurementsColors.textColorProperty,
+        fill: RadioactivityAndStatisticsColors.textColorProperty,
         maxWidth: CONTROL_PANEL_WIDTH - 50,
       }),
       { ...SIM_CHECKBOX_OPTIONS, accessibleName: a11y.continuousCheckboxStringProperty },
@@ -109,10 +106,10 @@ export class AcquisitionPanel extends RadioactivityAndMeasurementsPanel {
 
     const stopButton = new RectangularPushButton({
       ...FLAT_PANEL_PUSH_BUTTON_OPTIONS,
-      baseColor: RadioactivityAndMeasurementsColors.statusCriticalColorProperty,
+      baseColor: RadioactivityAndStatisticsColors.statusCriticalColorProperty,
       content: new Text(strings.stopStringProperty, {
         font: new PhetFont(13),
-        fill: RadioactivityAndMeasurementsColors.onStatusCriticalTextColorProperty,
+        fill: RadioactivityAndStatisticsColors.onStatusCriticalTextColorProperty,
       }),
       listener: () => model.stopRecording(),
       accessibleName: a11y.stopButtonStringProperty,
@@ -160,7 +157,7 @@ export class AcquisitionPanel extends RadioactivityAndMeasurementsPanel {
 
     const progressText = new Text(progressProperty, {
       font: new PhetFont(12),
-      fill: RadioactivityAndMeasurementsColors.secondaryTextColorProperty,
+      fill: RadioactivityAndStatisticsColors.secondaryTextColorProperty,
       maxWidth: CONTROL_PANEL_WIDTH - 30,
     });
 

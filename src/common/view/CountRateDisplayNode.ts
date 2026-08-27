@@ -16,7 +16,7 @@ import { toFixed } from "scenerystack/dot";
 import { Text, VBox } from "scenerystack/scenery";
 import { PhetFont } from "scenerystack/scenery-phet";
 import { StringManager } from "../../i18n/StringManager.js";
-import RadioactivityAndMeasurementsColors from "../../RadioactivityAndMeasurementsColors.js";
+import RadioactivityAndStatisticsColors from "../../RadioactivityAndStatisticsColors.js";
 import type { RadioactivityModel } from "../model/RadioactivityModel.js";
 
 /** Decimal places on the rate; a tenth of a count per second is plenty. */
@@ -38,27 +38,27 @@ export class CountRateDisplayNode extends VBox {
 
     const caption = new Text(readoutStrings.countRateStringProperty, {
       font: new PhetFont(14),
-      fill: RadioactivityAndMeasurementsColors.secondaryTextColorProperty,
+      fill: RadioactivityAndStatisticsColors.secondaryTextColorProperty,
     });
 
     const value = new Text(rateValueProperty, {
       font: new PhetFont({ size: 52, weight: "bold" }),
-      fill: RadioactivityAndMeasurementsColors.textColorProperty,
+      fill: RadioactivityAndStatisticsColors.textColorProperty,
     });
 
     const units = new Text(readoutStrings.countsPerSecondStringProperty, {
       font: new PhetFont(16),
-      fill: RadioactivityAndMeasurementsColors.secondaryTextColorProperty,
+      fill: RadioactivityAndStatisticsColors.secondaryTextColorProperty,
     });
 
     const intervalCaption = new Text(readoutStrings.thisIntervalStringProperty, {
       font: new PhetFont(12),
-      fill: RadioactivityAndMeasurementsColors.secondaryTextColorProperty,
+      fill: RadioactivityAndStatisticsColors.secondaryTextColorProperty,
     });
 
     const intervalValue = new Text(intervalValueProperty, {
       font: new PhetFont({ size: 16, weight: "bold" }),
-      fill: RadioactivityAndMeasurementsColors.secondaryTextColorProperty,
+      fill: RadioactivityAndStatisticsColors.secondaryTextColorProperty,
     });
 
     super({

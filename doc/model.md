@@ -1,4 +1,4 @@
-# Model — Radioactivity and Measurements
+# Model — Radioactivity and Statistics
 
 The physics this simulation is about, and the choices behind how it is computed.
 

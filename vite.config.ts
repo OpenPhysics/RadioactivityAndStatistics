@@ -167,11 +167,11 @@ export default defineConfig(({ mode }) => {
             registerType: "autoUpdate",
             includeAssets: ["favicon.ico", "icons/apple-touch-icon.png"],
             manifest: {
-              id: "radioactivity-and-measurements",
-              name: "Radioactivity and Measurements",
+              id: "radioactivity-and-statistics",
+              name: "Radioactivity and Statistics",
               // biome-ignore lint/style/useNamingConvention: Web App Manifest spec requires snake_case keys
-              short_name: "RadioactivityAndMeasurements",
-              description: "A SceneryStack simulation: Radioactivity and Measurements",
+              short_name: "RadioactivityAndStatistics",
+              description: "A SceneryStack simulation: Radioactivity and Statistics",
               categories: ["education", "science"],
               // biome-ignore lint/style/useNamingConvention: Web App Manifest spec requires snake_case keys
               theme_color: "#1a1a2e",
@@ -207,7 +207,7 @@ export default defineConfig(({ mode }) => {
                   type: "image/png",
                   // biome-ignore lint/style/useNamingConvention: Web App Manifest spec requires snake_case keys
                   form_factor: "wide",
-                  label: "Radioactivity and Measurements",
+                  label: "Radioactivity and Statistics",
                 },
                 {
                   src: "screenshots/narrow.png",
@@ -215,7 +215,7 @@ export default defineConfig(({ mode }) => {
                   type: "image/png",
                   // biome-ignore lint/style/useNamingConvention: Web App Manifest spec requires snake_case keys
                   form_factor: "narrow",
-                  label: "Radioactivity and Measurements",
+                  label: "Radioactivity and Statistics",
                 },
               ],
             },

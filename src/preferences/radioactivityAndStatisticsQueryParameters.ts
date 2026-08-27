@@ -1,5 +1,5 @@
 /**
- * radioactivityAndMeasurementsQueryParameters.ts
+ * radioactivityAndStatisticsQueryParameters.ts
  *
  * Sim-specific startup query parameters — the single place each is declared and
  * documented. Public-facing parameters (intended for end users and shared
@@ -11,9 +11,9 @@
 import { logGlobal } from "scenerystack/phet-core";
 import { QueryStringMachine } from "scenerystack/query-string-machine";
 import { TUBE_VOLTAGE_CONTROL_RANGE } from "../common/hardware/PascoProtocol.js";
-import RadioactivityAndMeasurementsNamespace from "../RadioactivityAndMeasurementsNamespace.js";
+import RadioactivityAndStatisticsNamespace from "../RadioactivityAndStatisticsNamespace.js";
 
-const radioactivityAndMeasurementsQueryParameters = QueryStringMachine.getAll({
+const radioactivityAndStatisticsQueryParameters = QueryStringMachine.getAll({
   /**
    * Shows the raw CountRate register and GM tube voltage in the source panel.
    *
@@ -51,12 +51,12 @@ const radioactivityAndMeasurementsQueryParameters = QueryStringMachine.getAll({
   },
 });
 
-RadioactivityAndMeasurementsNamespace.register(
-  "radioactivityAndMeasurementsQueryParameters",
-  radioactivityAndMeasurementsQueryParameters,
+RadioactivityAndStatisticsNamespace.register(
+  "radioactivityAndStatisticsQueryParameters",
+  radioactivityAndStatisticsQueryParameters,
 );
 
 // Log query parameters (for the console / PhET-iO).
 logGlobal("phet.chipper.queryParameters");
 
-export default radioactivityAndMeasurementsQueryParameters;
+export default radioactivityAndStatisticsQueryParameters;

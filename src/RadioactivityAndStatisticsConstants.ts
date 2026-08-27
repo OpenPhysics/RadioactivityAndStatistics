@@ -1,5 +1,5 @@
 /**
- * RadioactivityAndMeasurementsConstants.ts
+ * RadioactivityAndStatisticsConstants.ts
  *
  * Every named numeric constant used across the simulation. Values that carry
  * semantic meaning live here rather than inline, so they are named, documented,
@@ -9,11 +9,11 @@
  * ───────────
  *  - Model values use SI units; the unit is noted on each value.
  *  - Layout values are in screen pixels of the 1024 × 618 layout space.
- *  - Colours live in RadioactivityAndMeasurementsColors.ts, not here.
+ *  - Colours live in RadioactivityAndStatisticsColors.ts, not here.
  */
 
 import { Range } from "scenerystack/dot";
-import RadioactivityAndMeasurementsNamespace from "./RadioactivityAndMeasurementsNamespace.js";
+import RadioactivityAndStatisticsNamespace from "./RadioactivityAndStatisticsNamespace.js";
 
 // ── Layout / chrome (screen pixels) ───────────────────────────────────────────
 
@@ -114,7 +114,7 @@ export const MAXIMUM_STEP_DT = 0.5;
 /** Cap on intervals completed in a single frame, as a runaway-loop guard. */
 export const MAXIMUM_INTERVALS_PER_FRAME = 5;
 
-RadioactivityAndMeasurementsNamespace.register("RadioactivityAndMeasurementsConstants", {
+RadioactivityAndStatisticsNamespace.register("RadioactivityAndStatisticsConstants", {
   SCREEN_VIEW_MARGIN,
   PANEL_CORNER_RADIUS,
   PANEL_SPACING,

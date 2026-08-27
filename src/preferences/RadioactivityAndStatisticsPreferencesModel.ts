@@ -1,19 +1,19 @@
 /**
- * RadioactivityAndMeasurementsPreferencesModel.ts
+ * RadioactivityAndStatisticsPreferencesModel.ts
  *
  * Model for the simulation-specific preferences shown in Preferences →
  * Simulation. Each Property takes its initial value from the corresponding
- * query parameter in radioactivityAndMeasurementsQueryParameters.
+ * query parameter in radioactivityAndStatisticsQueryParameters.
  */
 
 import { BooleanProperty, NumberProperty } from "scenerystack/axon";
 import { Range } from "scenerystack/dot";
 import type { Tandem } from "scenerystack/tandem";
 import { TUBE_VOLTAGE_CONTROL_RANGE } from "../common/hardware/PascoProtocol.js";
-import RadioactivityAndMeasurementsNamespace from "../RadioactivityAndMeasurementsNamespace.js";
-import radioactivityAndMeasurementsQueryParameters from "./radioactivityAndMeasurementsQueryParameters.js";
+import RadioactivityAndStatisticsNamespace from "../RadioactivityAndStatisticsNamespace.js";
+import radioactivityAndStatisticsQueryParameters from "./radioactivityAndStatisticsQueryParameters.js";
 
-export class RadioactivityAndMeasurementsPreferencesModel {
+export class RadioactivityAndStatisticsPreferencesModel {
   /**
    * Whether the source panel shows the raw count register and tube voltage.
    *
@@ -40,16 +40,16 @@ export class RadioactivityAndMeasurementsPreferencesModel {
 
   public constructor(tandem?: Tandem) {
     this.showDiagnosticsProperty = new BooleanProperty(
-      radioactivityAndMeasurementsQueryParameters.showDiagnostics,
+      radioactivityAndStatisticsQueryParameters.showDiagnostics,
       tandem ? { tandem: tandem.createTandem("showDiagnosticsProperty") } : undefined,
     );
 
     this.beepEnabledProperty = new BooleanProperty(
-      radioactivityAndMeasurementsQueryParameters.beepEnabled,
+      radioactivityAndStatisticsQueryParameters.beepEnabled,
       tandem ? { tandem: tandem.createTandem("beepEnabledProperty") } : undefined,
     );
 
-    this.tubeVoltageProperty = new NumberProperty(radioactivityAndMeasurementsQueryParameters.tubeVoltage, {
+    this.tubeVoltageProperty = new NumberProperty(radioactivityAndStatisticsQueryParameters.tubeVoltage, {
       range: new Range(TUBE_VOLTAGE_CONTROL_RANGE.min, TUBE_VOLTAGE_CONTROL_RANGE.max),
       units: "V",
       ...(tandem ? { tandem: tandem.createTandem("tubeVoltageProperty") } : {}),
@@ -63,7 +63,7 @@ export class RadioactivityAndMeasurementsPreferencesModel {
   }
 }
 
-RadioactivityAndMeasurementsNamespace.register(
-  "RadioactivityAndMeasurementsPreferencesModel",
-  RadioactivityAndMeasurementsPreferencesModel,
+RadioactivityAndStatisticsNamespace.register(
+  "RadioactivityAndStatisticsPreferencesModel",
+  RadioactivityAndStatisticsPreferencesModel,
 );

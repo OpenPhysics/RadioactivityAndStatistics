@@ -8,10 +8,10 @@ import { type EmptySelfOptions, optionize } from "scenerystack/phet-core";
 import type { ScreenOptions } from "scenerystack/sim";
 import { Screen } from "scenerystack/sim";
 import type { Tandem } from "scenerystack/tandem";
-import { createLabIcon } from "../common/RadioactivityAndMeasurementsScreenIcons.js";
+import { createLabIcon } from "../common/RadioactivityAndStatisticsScreenIcons.js";
 import { RadioactivityKeyboardHelpContent } from "../common/view/RadioactivityKeyboardHelpContent.js";
-import type { RadioactivityAndMeasurementsPreferencesModel } from "../preferences/RadioactivityAndMeasurementsPreferencesModel.js";
-import RadioactivityAndMeasurementsColors from "../RadioactivityAndMeasurementsColors.js";
+import type { RadioactivityAndStatisticsPreferencesModel } from "../preferences/RadioactivityAndStatisticsPreferencesModel.js";
+import RadioactivityAndStatisticsColors from "../RadioactivityAndStatisticsColors.js";
 import { LabModel } from "./model/LabModel.js";
 import { LabScreenView } from "./view/LabScreenView.js";
 
@@ -19,7 +19,7 @@ import { LabScreenView } from "./view/LabScreenView.js";
 type LabScreenOptions = ScreenOptions & { tandem: Tandem };
 
 export class LabScreen extends Screen<LabModel, LabScreenView> {
-  public constructor(preferences: RadioactivityAndMeasurementsPreferencesModel, options: LabScreenOptions) {
+  public constructor(preferences: RadioactivityAndStatisticsPreferencesModel, options: LabScreenOptions) {
     super(
       () => new LabModel(preferences),
       (model) =>
@@ -28,7 +28,7 @@ export class LabScreen extends Screen<LabModel, LabScreenView> {
         }),
       optionize<LabScreenOptions, EmptySelfOptions, ScreenOptions>()(
         {
-          backgroundColorProperty: RadioactivityAndMeasurementsColors.backgroundColorProperty,
+          backgroundColorProperty: RadioactivityAndStatisticsColors.backgroundColorProperty,
           createKeyboardHelpNode: () => new RadioactivityKeyboardHelpContent(),
           homeScreenIcon: createLabIcon(),
           navigationBarIcon: createLabIcon(),

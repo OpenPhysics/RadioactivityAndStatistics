@@ -1,13 +1,13 @@
 {
-  "name": "radioactivity-and-measurements",
+  "name": "radioactivity-and-statistics",
   "private": true,
   "version": "0.0.0",
   "type": "module",
-  "description": "A SceneryStack simulation: Radioactivity and Measurements.",
+  "description": "A SceneryStack simulation: Radioactivity and Statistics.",
   "license": "AGPL-3.0-or-later",
   "repository": {
     "type": "git",
-    "url": "https://github.com/OpenPhysics/RadioactivityAndMeasurements.git"
+    "url": "https://github.com/OpenPhysics/RadioactivityAndStatistics.git"
   },
   "keywords": [
     "simulation",

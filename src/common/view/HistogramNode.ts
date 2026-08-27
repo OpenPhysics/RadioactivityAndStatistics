@@ -32,13 +32,13 @@ import { Orientation } from "scenerystack/phet-core";
 import { HBox, Line, Node, type ProfileColorProperty, Text, VBox } from "scenerystack/scenery";
 import { PhetFont } from "scenerystack/scenery-phet";
 import { StringManager } from "../../i18n/StringManager.js";
-import RadioactivityAndMeasurementsColors from "../../RadioactivityAndMeasurementsColors.js";
+import RadioactivityAndStatisticsColors from "../../RadioactivityAndStatisticsColors.js";
 import {
   CURVE_DASH_PATTERNS,
   CURVE_LINE_WIDTH,
   HISTOGRAM_BAR_GAP,
   HISTOGRAM_CHART_SIZE,
-} from "../../RadioactivityAndMeasurementsConstants.js";
+} from "../../RadioactivityAndStatisticsConstants.js";
 import { gaussianCurve, type Histogram, poissonExpectation } from "../model/Histogram.js";
 import type { RadioactivityModel } from "../model/RadioactivityModel.js";
 import { chooseTickSpacing } from "./chartTicks.js";
@@ -87,14 +87,14 @@ export class HistogramNode extends VBox {
     });
 
     const chartRectangle = new ChartRectangle(chartTransform, {
-      fill: RadioactivityAndMeasurementsColors.chartSurfaceColorProperty,
-      stroke: RadioactivityAndMeasurementsColors.chartBorderColorProperty,
+      fill: RadioactivityAndStatisticsColors.chartSurfaceColorProperty,
+      stroke: RadioactivityAndStatisticsColors.chartBorderColorProperty,
       cornerXRadius: 3,
       cornerYRadius: 3,
     });
 
     const gridOptions = {
-      stroke: RadioactivityAndMeasurementsColors.chartGridColorProperty,
+      stroke: RadioactivityAndStatisticsColors.chartGridColorProperty,
       lineWidth: 1,
     };
     const xGridLines = new GridLineSet(chartTransform, Orientation.HORIZONTAL, 10, gridOptions);
@@ -103,22 +103,22 @@ export class HistogramNode extends VBox {
     const barPlot = new BarPlot(chartTransform, [], {
       barWidth: 10,
       pointToPaintableFields: () => ({
-        fill: RadioactivityAndMeasurementsColors.histogramBarColorProperty,
+        fill: RadioactivityAndStatisticsColors.histogramBarColorProperty,
       }),
     });
 
     const poissonPlot = new LinePlot(chartTransform, [], {
-      stroke: RadioactivityAndMeasurementsColors.poissonCurveColorProperty,
+      stroke: RadioactivityAndStatisticsColors.poissonCurveColorProperty,
       lineWidth: CURVE_LINE_WIDTH,
       lineDash: [...CURVE_DASH_PATTERNS.poisson],
     });
     const gaussianPredictionPlot = new LinePlot(chartTransform, [], {
-      stroke: RadioactivityAndMeasurementsColors.gaussianPredictionColorProperty,
+      stroke: RadioactivityAndStatisticsColors.gaussianPredictionColorProperty,
       lineWidth: CURVE_LINE_WIDTH,
       lineDash: [...CURVE_DASH_PATTERNS.gaussianPrediction],
     });
     const gaussianFitPlot = new LinePlot(chartTransform, [], {
-      stroke: RadioactivityAndMeasurementsColors.gaussianFitColorProperty,
+      stroke: RadioactivityAndStatisticsColors.gaussianFitColorProperty,
       lineWidth: CURVE_LINE_WIDTH,
       lineDash: [...CURVE_DASH_PATTERNS.gaussianFit],
     });
@@ -131,7 +131,7 @@ export class HistogramNode extends VBox {
     });
 
     const axisOptions = {
-      stroke: RadioactivityAndMeasurementsColors.chartAxisColorProperty,
+      stroke: RadioactivityAndStatisticsColors.chartAxisColorProperty,
       lineWidth: 1,
     };
     const tickLabelOptions = {
@@ -139,7 +139,7 @@ export class HistogramNode extends VBox {
       createLabel: (value: number) =>
         new Text(formatTick(value), {
           font: new PhetFont(11),
-          fill: RadioactivityAndMeasurementsColors.chartAxisColorProperty,
+          fill: RadioactivityAndStatisticsColors.chartAxisColorProperty,
         }),
     };
 
@@ -159,7 +159,7 @@ export class HistogramNode extends VBox {
 
     const axisTitleOptions = {
       font: new PhetFont(12),
-      fill: RadioactivityAndMeasurementsColors.secondaryTextColorProperty,
+      fill: RadioactivityAndStatisticsColors.secondaryTextColorProperty,
     };
     const yAxisTitle = new Text(strings.axisFrequencyStringProperty, { ...axisTitleOptions, rotation: -Math.PI / 2 });
     const xAxisTitle = new Text(strings.axisCountsStringProperty, axisTitleOptions);
@@ -179,19 +179,19 @@ export class HistogramNode extends VBox {
       children: [
         legendEntry(
           strings.poissonStringProperty,
-          RadioactivityAndMeasurementsColors.poissonCurveColorProperty,
+          RadioactivityAndStatisticsColors.poissonCurveColorProperty,
           [...CURVE_DASH_PATTERNS.poisson],
           curves.poissonVisibleProperty,
         ),
         legendEntry(
           strings.gaussianPredictionStringProperty,
-          RadioactivityAndMeasurementsColors.gaussianPredictionColorProperty,
+          RadioactivityAndStatisticsColors.gaussianPredictionColorProperty,
           [...CURVE_DASH_PATTERNS.gaussianPrediction],
           curves.gaussianPredictionVisibleProperty,
         ),
         legendEntry(
           strings.gaussianFitStringProperty,
-          RadioactivityAndMeasurementsColors.gaussianFitColorProperty,
+          RadioactivityAndStatisticsColors.gaussianFitColorProperty,
           [...CURVE_DASH_PATTERNS.gaussianFit],
           curves.gaussianFitVisibleProperty,
         ),
@@ -364,7 +364,7 @@ function legendEntry(
       swatch,
       new Text(labelProperty, {
         font: new PhetFont(11),
-        fill: RadioactivityAndMeasurementsColors.secondaryTextColorProperty,
+        fill: RadioactivityAndStatisticsColors.secondaryTextColorProperty,
         maxWidth: 150,
       }),
     ],

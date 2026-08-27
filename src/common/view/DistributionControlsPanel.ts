@@ -19,10 +19,10 @@ import { NumberControl, PhetFont } from "scenerystack/scenery-phet";
 import { Checkbox } from "scenerystack/sun";
 import type { LabControlA11yStrings } from "../../i18n/StringManager.js";
 import { StringManager } from "../../i18n/StringManager.js";
-import RadioactivityAndMeasurementsColors from "../../RadioactivityAndMeasurementsColors.js";
-import { BIN_WIDTH_RANGE, CONTROL_PANEL_WIDTH } from "../../RadioactivityAndMeasurementsConstants.js";
+import RadioactivityAndStatisticsColors from "../../RadioactivityAndStatisticsColors.js";
+import { BIN_WIDTH_RANGE, CONTROL_PANEL_WIDTH } from "../../RadioactivityAndStatisticsConstants.js";
 import type { RadioactivityModel } from "../model/RadioactivityModel.js";
-import { RadioactivityAndMeasurementsPanel } from "../RadioactivityAndMeasurementsPanel.js";
+import { RadioactivityAndStatisticsPanel } from "../RadioactivityAndStatisticsPanel.js";
 import { SIM_CHECKBOX_OPTIONS, SIM_NUMBER_CONTROL_OPTIONS } from "../SimControlOptions.js";
 import type { CurveVisibility } from "./HistogramNode.js";
 
@@ -36,7 +36,7 @@ export type CurveVisibilityControls = {
   readonly gaussianFitVisibleProperty: BooleanProperty;
 };
 
-export class DistributionControlsPanel extends RadioactivityAndMeasurementsPanel {
+export class DistributionControlsPanel extends RadioactivityAndStatisticsPanel {
   private readonly disposeDistributionControlsPanel: () => void;
 
   public constructor(model: RadioactivityModel, curves: CurveVisibilityControls, a11y: LabControlA11yStrings) {
@@ -44,7 +44,7 @@ export class DistributionControlsPanel extends RadioactivityAndMeasurementsPanel
 
     const title = new Text(strings.titleStringProperty, {
       font: new PhetFont({ size: 15, weight: "bold" }),
-      fill: RadioactivityAndMeasurementsColors.textColorProperty,
+      fill: RadioactivityAndStatisticsColors.textColorProperty,
     });
 
     /** A checkbox whose label carries the curve's own colour as a cue. */
@@ -57,7 +57,7 @@ export class DistributionControlsPanel extends RadioactivityAndMeasurementsPanel
         property,
         new Text(labelProperty, {
           font: new PhetFont(12),
-          fill: RadioactivityAndMeasurementsColors.textColorProperty,
+          fill: RadioactivityAndStatisticsColors.textColorProperty,
           maxWidth: CONTROL_PANEL_WIDTH - 55,
         }),
         { ...SIM_CHECKBOX_OPTIONS, accessibleName },
@@ -83,7 +83,7 @@ export class DistributionControlsPanel extends RadioactivityAndMeasurementsPanel
       model.isAutoBinWidthProperty,
       new Text(strings.autoBinWidthStringProperty, {
         font: new PhetFont(12),
-        fill: RadioactivityAndMeasurementsColors.textColorProperty,
+        fill: RadioactivityAndStatisticsColors.textColorProperty,
         maxWidth: CONTROL_PANEL_WIDTH - 55,
       }),
       { ...SIM_CHECKBOX_OPTIONS, accessibleName: a11y.autoBinWidthCheckboxStringProperty },
@@ -100,7 +100,7 @@ export class DistributionControlsPanel extends RadioactivityAndMeasurementsPanel
         delta: 1,
         titleNodeOptions: {
           font: new PhetFont(12),
-          fill: RadioactivityAndMeasurementsColors.textColorProperty,
+          fill: RadioactivityAndStatisticsColors.textColorProperty,
           maxWidth: CONTROL_PANEL_WIDTH - 40,
         },
         numberDisplayOptions: { textOptions: { font: new PhetFont(12) } },

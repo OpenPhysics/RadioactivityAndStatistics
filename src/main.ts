@@ -24,26 +24,26 @@ import { Tandem } from "scenerystack/tandem";
 import { StringManager } from "./i18n/StringManager.js";
 import { IntroScreen } from "./intro/IntroScreen.js";
 import { LabScreen } from "./lab/LabScreen.js";
-import { RadioactivityAndMeasurementsPreferencesModel } from "./preferences/RadioactivityAndMeasurementsPreferencesModel.js";
-import { RadioactivityAndMeasurementsPreferencesNode } from "./preferences/RadioactivityAndMeasurementsPreferencesNode.js";
-import RadioactivityAndMeasurementsColors from "./RadioactivityAndMeasurementsColors.js";
+import { RadioactivityAndStatisticsPreferencesModel } from "./preferences/RadioactivityAndStatisticsPreferencesModel.js";
+import { RadioactivityAndStatisticsPreferencesNode } from "./preferences/RadioactivityAndStatisticsPreferencesNode.js";
+import RadioactivityAndStatisticsColors from "./RadioactivityAndStatisticsColors.js";
 
 onReadyToLaunch(() => {
   const stringManager = StringManager.getInstance();
 
-  // Simulation-specific preferences; initial values come from radioactivityAndMeasurementsQueryParameters.
-  const simPreferences = new RadioactivityAndMeasurementsPreferencesModel(Tandem.ROOT.createTandem("preferences"));
+  // Simulation-specific preferences; initial values come from radioactivityAndStatisticsQueryParameters.
+  const simPreferences = new RadioactivityAndStatisticsPreferencesModel(Tandem.ROOT.createTandem("preferences"));
 
   const screens = [
     new IntroScreen(simPreferences, {
       name: stringManager.getScreenNames().introStringProperty,
       tandem: Tandem.ROOT.createTandem("introScreen"),
-      backgroundColorProperty: RadioactivityAndMeasurementsColors.backgroundColorProperty,
+      backgroundColorProperty: RadioactivityAndStatisticsColors.backgroundColorProperty,
     }),
     new LabScreen(simPreferences, {
       name: stringManager.getScreenNames().labStringProperty,
       tandem: Tandem.ROOT.createTandem("labScreen"),
-      backgroundColorProperty: RadioactivityAndMeasurementsColors.backgroundColorProperty,
+      backgroundColorProperty: RadioactivityAndStatisticsColors.backgroundColorProperty,
     }),
   ];
 
@@ -58,7 +58,7 @@ onReadyToLaunch(() => {
       simulationOptions: {
         customPreferences: [
           {
-            createContent: (tandem: Tandem) => new RadioactivityAndMeasurementsPreferencesNode(simPreferences, tandem),
+            createContent: (tandem: Tandem) => new RadioactivityAndStatisticsPreferencesNode(simPreferences, tandem),
           },
         ],
       },

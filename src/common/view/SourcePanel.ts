@@ -17,23 +17,20 @@ import { NumberControl, PhetFont } from "scenerystack/scenery-phet";
 import { AquaRadioButtonGroup, RectangularPushButton } from "scenerystack/sun";
 import type { SharedControlA11yStrings } from "../../i18n/StringManager.js";
 import { StringManager } from "../../i18n/StringManager.js";
-import RadioactivityAndMeasurementsColors from "../../RadioactivityAndMeasurementsColors.js";
-import { CONTROL_PANEL_WIDTH } from "../../RadioactivityAndMeasurementsConstants.js";
+import RadioactivityAndStatisticsColors from "../../RadioactivityAndStatisticsColors.js";
+import { CONTROL_PANEL_WIDTH } from "../../RadioactivityAndStatisticsConstants.js";
 import { getWebBluetoothStatus, WebBluetoothStatus } from "../hardware/webBluetoothSupport.js";
 import { ConnectionState } from "../model/ConnectionState.js";
 import { CountSourceType } from "../model/CountSource.js";
 import type { RadioactivityModel } from "../model/RadioactivityModel.js";
-import {
-  FLAT_PANEL_PUSH_BUTTON_OPTIONS,
-  LIGHT_SURFACE_TEXT_FILL,
-} from "../RadioactivityAndMeasurementsButtonOptions.js";
-import { RadioactivityAndMeasurementsPanel } from "../RadioactivityAndMeasurementsPanel.js";
+import { FLAT_PANEL_PUSH_BUTTON_OPTIONS, LIGHT_SURFACE_TEXT_FILL } from "../RadioactivityAndStatisticsButtonOptions.js";
+import { RadioactivityAndStatisticsPanel } from "../RadioactivityAndStatisticsPanel.js";
 import { SIM_NUMBER_CONTROL_OPTIONS } from "../SimControlOptions.js";
 
 /** Radius of the connection-status dot. */
 const STATUS_DOT_RADIUS = 5;
 
-export class SourcePanel extends RadioactivityAndMeasurementsPanel {
+export class SourcePanel extends RadioactivityAndStatisticsPanel {
   private readonly disposeSourcePanel: () => void;
 
   public constructor(
@@ -47,7 +44,7 @@ export class SourcePanel extends RadioactivityAndMeasurementsPanel {
 
     const title = new Text(strings.titleStringProperty, {
       font: new PhetFont({ size: 15, weight: "bold" }),
-      fill: RadioactivityAndMeasurementsColors.textColorProperty,
+      fill: RadioactivityAndStatisticsColors.textColorProperty,
     });
 
     // ── Source selection ──────────────────────────────────────────────────────
@@ -59,7 +56,7 @@ export class SourcePanel extends RadioactivityAndMeasurementsPanel {
           createNode: () =>
             new Text(strings.simulatedStringProperty, {
               font: new PhetFont(13),
-              fill: RadioactivityAndMeasurementsColors.textColorProperty,
+              fill: RadioactivityAndStatisticsColors.textColorProperty,
               maxWidth: 170,
             }),
         },
@@ -68,7 +65,7 @@ export class SourcePanel extends RadioactivityAndMeasurementsPanel {
           createNode: () =>
             new Text(strings.geigerCounterStringProperty, {
               font: new PhetFont(13),
-              fill: RadioactivityAndMeasurementsColors.textColorProperty,
+              fill: RadioactivityAndStatisticsColors.textColorProperty,
               maxWidth: 170,
             }),
         },
@@ -90,7 +87,7 @@ export class SourcePanel extends RadioactivityAndMeasurementsPanel {
         delta: 1,
         titleNodeOptions: {
           font: new PhetFont(13),
-          fill: RadioactivityAndMeasurementsColors.textColorProperty,
+          fill: RadioactivityAndStatisticsColors.textColorProperty,
           maxWidth: CONTROL_PANEL_WIDTH - 40,
         },
         numberDisplayOptions: {
@@ -134,15 +131,15 @@ export class SourcePanel extends RadioactivityAndMeasurementsPanel {
 
     const statusColorProperty = new DerivedProperty([geigerSource.connectionStateProperty], (state) => {
       if (state === ConnectionState.CONNECTED) {
-        return RadioactivityAndMeasurementsColors.statusGoodColorProperty.value;
+        return RadioactivityAndStatisticsColors.statusGoodColorProperty.value;
       }
       if (state === ConnectionState.CONNECTING) {
-        return RadioactivityAndMeasurementsColors.statusWarningColorProperty.value;
+        return RadioactivityAndStatisticsColors.statusWarningColorProperty.value;
       }
       if (state === ConnectionState.ERROR) {
-        return RadioactivityAndMeasurementsColors.statusCriticalColorProperty.value;
+        return RadioactivityAndStatisticsColors.statusCriticalColorProperty.value;
       }
-      return RadioactivityAndMeasurementsColors.statusIdleColorProperty.value;
+      return RadioactivityAndStatisticsColors.statusIdleColorProperty.value;
     });
 
     const statusRow = new HBox({
@@ -151,7 +148,7 @@ export class SourcePanel extends RadioactivityAndMeasurementsPanel {
         new Circle(STATUS_DOT_RADIUS, { fill: statusColorProperty }),
         new Text(statusTextProperty, {
           font: new PhetFont(13),
-          fill: RadioactivityAndMeasurementsColors.textColorProperty,
+          fill: RadioactivityAndStatisticsColors.textColorProperty,
           maxWidth: CONTROL_PANEL_WIDTH - 60,
         }),
       ],
@@ -165,7 +162,7 @@ export class SourcePanel extends RadioactivityAndMeasurementsPanel {
     );
     const deviceNameText = new Text(deviceNameProperty, {
       font: new PhetFont(11),
-      fill: RadioactivityAndMeasurementsColors.secondaryTextColorProperty,
+      fill: RadioactivityAndStatisticsColors.secondaryTextColorProperty,
       maxWidth: CONTROL_PANEL_WIDTH - 30,
       visibleProperty: new DerivedProperty([deviceNameProperty], (name) => name.length > 0),
     });
@@ -207,7 +204,7 @@ export class SourcePanel extends RadioactivityAndMeasurementsPanel {
         : strings.unsupportedBrowserStringProperty;
     const unavailableText = new Text(unavailableMessage, {
       font: new PhetFont(11),
-      fill: RadioactivityAndMeasurementsColors.statusCriticalColorProperty,
+      fill: RadioactivityAndStatisticsColors.statusCriticalColorProperty,
       maxWidth: CONTROL_PANEL_WIDTH - 30,
       visible: browserStatus !== WebBluetoothStatus.AVAILABLE,
     });
@@ -215,7 +212,7 @@ export class SourcePanel extends RadioactivityAndMeasurementsPanel {
     const errorTextProperty = new DerivedProperty([geigerSource.errorMessageProperty], (message) => message ?? "");
     const errorText = new Text(errorTextProperty, {
       font: new PhetFont(11),
-      fill: RadioactivityAndMeasurementsColors.statusCriticalColorProperty,
+      fill: RadioactivityAndStatisticsColors.statusCriticalColorProperty,
       maxWidth: CONTROL_PANEL_WIDTH - 30,
       visibleProperty: new DerivedProperty([errorTextProperty], (message) => message.length > 0),
     });
@@ -239,11 +236,11 @@ export class SourcePanel extends RadioactivityAndMeasurementsPanel {
       children: [
         new Text(registerValueProperty, {
           font: new PhetFont(11),
-          fill: RadioactivityAndMeasurementsColors.secondaryTextColorProperty,
+          fill: RadioactivityAndStatisticsColors.secondaryTextColorProperty,
         }),
         new Text(tubeVoltageValueProperty, {
           font: new PhetFont(11),
-          fill: RadioactivityAndMeasurementsColors.secondaryTextColorProperty,
+          fill: RadioactivityAndStatisticsColors.secondaryTextColorProperty,
         }),
       ],
     });

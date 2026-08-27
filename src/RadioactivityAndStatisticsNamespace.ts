@@ -1,5 +1,5 @@
 /**
- * RadioactivityAndMeasurementsNamespace.ts
+ * RadioactivityAndStatisticsNamespace.ts
  *
  * The SceneryStack Namespace for this simulation. It is used as the first
  * argument to ProfileColorProperty (so color names are scoped to this sim)
@@ -11,6 +11,6 @@
  */
 import { Namespace } from "scenerystack/phet-core";
 
-const RadioactivityAndMeasurementsNamespace = new Namespace("radioactivity-and-measurements");
+const RadioactivityAndStatisticsNamespace = new Namespace("radioactivity-and-statistics");
 
-export default RadioactivityAndMeasurementsNamespace;
+export default RadioactivityAndStatisticsNamespace;

@@ -1,4 +1,4 @@
-# Implementation notes — Radioactivity and Measurements
+# Implementation notes — Radioactivity and Statistics
 
 Architecture, the PASCO Bluetooth protocol, and the decisions that are not
 obvious from the code.
