@@ -8,8 +8,8 @@
 import { Dimension2 } from "scenerystack/dot";
 import { NumberControl } from "scenerystack/scenery-phet";
 import type { CheckboxOptions, HSliderOptions } from "scenerystack/sun";
-import SimColors from "../SimColors.js";
-import { FLAT_RECTANGULAR_BUTTON_OPTIONS } from "./SimButtonOptions.js";
+import RadioactivityAndMeasurementsColors from "../RadioactivityAndMeasurementsColors.js";
+import { FLAT_RECTANGULAR_BUTTON_OPTIONS } from "./RadioactivityAndMeasurementsButtonOptions.js";
 
 const SLIDER_THUMB_SIZE = new Dimension2(12, 22);
 const STANDALONE_SLIDER_TRACK_SIZE = new Dimension2(150, 3);
@@ -20,7 +20,7 @@ const CHECKBOX_BOX_WIDTH = 16;
 export const SIM_SLIDER_OPTIONS = {
   trackSize: STANDALONE_SLIDER_TRACK_SIZE,
   thumbSize: SLIDER_THUMB_SIZE,
-  trackFillEnabled: SimColors.textColorProperty,
+  trackFillEnabled: RadioactivityAndMeasurementsColors.textColorProperty,
 } satisfies HSliderOptions;
 
 /** Base NumberControl options; spread into each instance and add titleNodeOptions as needed. */
@@ -34,7 +34,7 @@ export const SIM_NUMBER_CONTROL_OPTIONS = {
   sliderOptions: {
     trackSize: NUMBER_CONTROL_SLIDER_TRACK_SIZE,
     thumbSize: SLIDER_THUMB_SIZE,
-    trackFillEnabled: SimColors.textColorProperty,
+    trackFillEnabled: RadioactivityAndMeasurementsColors.textColorProperty,
   },
 };
 
@@ -42,13 +42,13 @@ export const SIM_NUMBER_CONTROL_OPTIONS = {
  * Themed checkbox chrome on dark panel backgrounds.
  *
  * The box fill matches the panel so the control reads as part of the panel, and
- * the tick/border use {@link SimColors.textColorProperty} (near-white in default
- * mode). Do not use {@link SimColors.controlSurfaceColorProperty} here — that
+ * the tick/border use {@link RadioactivityAndMeasurementsColors.textColorProperty} (near-white in default
+ * mode). Do not use {@link RadioactivityAndMeasurementsColors.controlSurfaceColorProperty} here — that
  * colour is for white chrome (push buttons, combo lists, Preferences).
  */
 export const SIM_CHECKBOX_OPTIONS = {
   boxWidth: CHECKBOX_BOX_WIDTH,
   spacing: 4,
-  checkboxColor: SimColors.textColorProperty,
-  checkboxColorBackground: SimColors.panelBackgroundColorProperty,
+  checkboxColor: RadioactivityAndMeasurementsColors.textColorProperty,
+  checkboxColorBackground: RadioactivityAndMeasurementsColors.panelBackgroundColorProperty,
 } satisfies CheckboxOptions;

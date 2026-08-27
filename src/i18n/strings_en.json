@@ -1,21 +1,140 @@
 {
-  "title": "SceneryStack Template",
+  "title": "Radioactivity and Measurements",
   "screens": {
-    "sim": "Sim"
+    "intro": "Intro",
+    "lab": "Lab"
+  },
+  "source": {
+    "title": "Source",
+    "simulated": "Simulated",
+    "geigerCounter": "Geiger counter",
+    "activity": "Activity",
+    "activityUnits": "counts/s",
+    "connect": "Connect",
+    "disconnect": "Disconnect",
+    "statusDisconnected": "Not connected",
+    "statusConnecting": "Connecting…",
+    "statusConnected": "Connected",
+    "statusError": "Connection problem",
+    "unsupportedBrowser": "This browser cannot reach Bluetooth devices. Use Chrome or Edge.",
+    "insecureContext": "Bluetooth needs a secure (HTTPS) page.",
+    "tubeVoltage": "Tube voltage",
+    "rawRegister": "Raw register",
+    "registerMode": "Register reading",
+    "registerModeCumulative": "Cumulative",
+    "registerModePerWindow": "Per window"
+  },
+  "acquisition": {
+    "title": "Measurement",
+    "interval": "Counting interval",
+    "samplesPerRun": "Samples per run",
+    "continuous": "Record continuously",
+    "record": "Record",
+    "stop": "Stop",
+    "clear": "Clear",
+    "exportCsv": "Export CSV"
+  },
+  "readout": {
+    "countRate": "Count rate",
+    "countsPerSecond": "counts/s",
+    "counts": "counts",
+    "thisInterval": "This interval",
+    "collected": "{{count}} of {{total}} samples",
+    "collectedContinuous": "{{count}} samples"
+  },
+  "table": {
+    "title": "Data",
+    "columnIndex": "#",
+    "columnTime": "t (s)",
+    "columnCounts": "Counts",
+    "columnRate": "Counts/s",
+    "empty": "No data yet. Press Record to start."
+  },
+  "statistics": {
+    "title": "Statistics",
+    "sampleCount": "Samples (N)",
+    "mean": "Mean",
+    "standardDeviation": "Std. deviation (s)",
+    "standardErrorOfMean": "Std. deviation of mean",
+    "poissonPrediction": "√mean (Poisson)",
+    "fittedSigma": "Fitted σ",
+    "reducedChiSquare": "χ² / dof",
+    "notAvailable": "—"
+  },
+  "histogram": {
+    "title": "Distribution",
+    "axisCounts": "Counts per interval",
+    "axisFrequency": "Number of measurements",
+    "poisson": "Poisson (λ = mean)",
+    "gaussianPrediction": "Gaussian (σ = √mean)",
+    "gaussianFit": "Gaussian fit",
+    "binWidth": "Bin width",
+    "autoBinWidth": "Automatic bin width",
+    "noFit": "Not enough data to fit"
+  },
+  "rateChart": {
+    "title": "Count rate over time",
+    "axisTime": "Time (s)",
+    "axisRate": "Counts/s"
   },
   "a11y": {
-    "screenSummary": {
-      "playArea": "The play area shows the main simulation content.",
-      "controlArea": "The control area has a Reset All button that returns the simulation to its starting state.",
-      "interactionHint": "Explore the simulation by interacting with its controls."
+    "intro": {
+      "screenSummary": {
+        "playArea": "The play area shows a live count-rate readout, a chart of the count rate over time, and a table of the measurements collected so far.",
+        "controlArea": "The control area lets you choose a counting source, set the counting interval and run length, start and stop recording, export the data, and reset the simulation.",
+        "interactionHint": "Press Record to collect a run of measurements, then read the count rate and the table."
+      },
+      "currentDetails": "No measurements have been collected yet.",
+      "currentDetailsRecording": "Recording. {{count}} measurements collected so far. Latest count rate {{rate}} counts per second.",
+      "currentDetailsCollected": "{{count}} measurements collected. Mean {{mean}} counts per interval, standard deviation {{deviation}}, and the square root of the mean is {{poisson}}.",
+      "controls": {
+        "sourceRadioGroup": "Counting source",
+        "activitySlider": "Simulated activity in counts per second",
+        "connectButton": "Connect to a Geiger counter over Bluetooth",
+        "disconnectButton": "Disconnect the Geiger counter",
+        "intervalControl": "Counting interval in seconds",
+        "samplesPerRunControl": "Number of samples in a run",
+        "continuousCheckbox": "Record continuously instead of stopping after a set number of samples",
+        "recordButton": "Start recording measurements",
+        "stopButton": "Stop recording measurements",
+        "clearButton": "Clear the collected measurements",
+        "exportButton": "Export the collected measurements as a CSV file",
+        "registerModeControl": "How the Geiger counter's raw count register is interpreted"
+      }
     },
-    "currentDetails": "The simulation is in its initial state.",
-    "controls": {
-      "exampleControl": "Example control"
+    "lab": {
+      "screenSummary": {
+        "playArea": "The play area shows a histogram of the collected measurements, with optional Poisson and Gaussian curves drawn on top, alongside a panel of summary statistics.",
+        "controlArea": "The control area lets you choose a counting source, set the counting interval and run length, start and stop recording, choose which theoretical curves to show, set the histogram bin width, export the data, and reset the simulation.",
+        "interactionHint": "Collect a run of measurements, then compare the histogram against the Poisson and Gaussian curves."
+      },
+      "currentDetails": "No measurements have been collected yet.",
+      "currentDetailsRecording": "Recording. {{count}} measurements collected so far. Latest count rate {{rate}} counts per second.",
+      "currentDetailsCollected": "{{count}} measurements collected. Mean {{mean}} counts per interval, standard deviation {{deviation}}, and the square root of the mean is {{poisson}}.",
+      "controls": {
+        "sourceRadioGroup": "Counting source",
+        "activitySlider": "Simulated activity in counts per second",
+        "connectButton": "Connect to a Geiger counter over Bluetooth",
+        "disconnectButton": "Disconnect the Geiger counter",
+        "intervalControl": "Counting interval in seconds",
+        "samplesPerRunControl": "Number of samples in a run",
+        "continuousCheckbox": "Record continuously instead of stopping after a set number of samples",
+        "recordButton": "Start recording measurements",
+        "stopButton": "Stop recording measurements",
+        "clearButton": "Clear the collected measurements",
+        "exportButton": "Export the collected measurements as a CSV file",
+        "registerModeControl": "How the Geiger counter's raw count register is interpreted",
+        "poissonCheckbox": "Show the Poisson prediction",
+        "gaussianPredictionCheckbox": "Show the Gaussian prediction with sigma equal to the square root of the mean",
+        "gaussianFitCheckbox": "Show the best-fit Gaussian",
+        "autoBinWidthCheckbox": "Choose the histogram bin width automatically",
+        "binWidthControl": "Histogram bin width in counts"
+      }
     }
   },
   "preferences": {
     "title": "Simulation",
-    "exampleToggle": "Example Toggle"
+    "showDiagnostics": "Show Geiger counter diagnostics",
+    "showDiagnosticsDescription": "Adds the raw count register and GM tube voltage to the source panel, for checking how a connected counter reports its counts."
   }
 }

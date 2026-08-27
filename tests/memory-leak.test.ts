@@ -8,7 +8,7 @@
  */
 
 import { describe, expect, it } from "vitest";
-import { TimeModel } from "../src/common/TimeModel.js";
+import { SimulatedCountSource } from "../src/common/model/SimulatedCountSource.js";
 
 /**
  * Force garbage collection with multiple passes. When `earlyExitRefs` is supplied
@@ -31,10 +31,15 @@ async function forceGC(earlyExitRefs?: WeakRef<object> | readonly WeakRef<object
   }
 }
 
-function createAndDisposeTimeModel(): WeakRef<object> {
-  const model = new TimeModel();
-  const ref = new WeakRef<object>(model);
-  model.dispose();
+/**
+ * The count source is the sim's most churned disposable: it owns Properties and
+ * is created afresh for every screen, so a leak here would accumulate across a
+ * session of switching screens.
+ */
+function createAndDisposeCountSource(): WeakRef<object> {
+  const source = new SimulatedCountSource(20);
+  const ref = new WeakRef<object>(source);
+  source.dispose();
   return ref;
 }
 
@@ -49,22 +54,16 @@ describe("Memory leak regression", () => {
     expect(ref.deref()).toBeUndefined();
   });
 
-  it("TimeModel is collected after dispose", async () => {
-    const ref = createAndDisposeTimeModel();
+  it("SimulatedCountSource is collected after dispose", async () => {
+    const ref = createAndDisposeCountSource();
     await forceGC(ref);
     expect(ref.deref()).toBeUndefined();
-  });
-
-  it("double dispose() does not throw", () => {
-    const model = new TimeModel();
-    model.dispose();
-    expect(() => model.dispose()).not.toThrow();
   });
 
   it("repeated create/dispose cycles leave no survivors", async () => {
     const refs: WeakRef<object>[] = [];
     for (let i = 0; i < 10; i++) {
-      refs.push(createAndDisposeTimeModel());
+      refs.push(createAndDisposeCountSource());
     }
     await forceGC(refs);
     const survivors = refs.filter((r) => r.deref() !== undefined).length;

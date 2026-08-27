@@ -46,10 +46,41 @@ const stringProperties = LocalizedString.getNestedStringProperties({
 });
 
 /**
- * Explicit `a11y` shape exposed by {@link StringManager.getA11yStrings}.
- * Keep this in sync with the `a11y` key in `strings_en.json` — a locale key
- * rename that is not mirrored here fails at the getter return (not silently).
+ * Explicit `a11y` shape exposed by {@link StringManager.getIntroA11yStrings} and
+ * {@link StringManager.getLabA11yStrings}. Keep this in sync with the `a11y`
+ * key in `strings_en.json` — a locale key rename that is not mirrored here
+ * fails at the getter return (not silently).
+ *
+ * The Lab screen adds curve and binning controls on top of the shared set, so
+ * its `controls` group is a superset of the Intro screen's.
  */
+export type SharedControlA11yStrings = {
+  readonly sourceRadioGroupStringProperty: ReadOnlyProperty<string>;
+  readonly activitySliderStringProperty: ReadOnlyProperty<string>;
+  readonly connectButtonStringProperty: ReadOnlyProperty<string>;
+  readonly disconnectButtonStringProperty: ReadOnlyProperty<string>;
+  readonly intervalControlStringProperty: ReadOnlyProperty<string>;
+  readonly samplesPerRunControlStringProperty: ReadOnlyProperty<string>;
+  readonly continuousCheckboxStringProperty: ReadOnlyProperty<string>;
+  readonly recordButtonStringProperty: ReadOnlyProperty<string>;
+  readonly stopButtonStringProperty: ReadOnlyProperty<string>;
+  readonly clearButtonStringProperty: ReadOnlyProperty<string>;
+  readonly exportButtonStringProperty: ReadOnlyProperty<string>;
+  readonly registerModeControlStringProperty: ReadOnlyProperty<string>;
+};
+
+/**
+ * The Lab screen's control names: the shared set plus the curve-visibility and
+ * binning controls that only it has.
+ */
+export type LabControlA11yStrings = SharedControlA11yStrings & {
+  readonly poissonCheckboxStringProperty: ReadOnlyProperty<string>;
+  readonly gaussianPredictionCheckboxStringProperty: ReadOnlyProperty<string>;
+  readonly gaussianFitCheckboxStringProperty: ReadOnlyProperty<string>;
+  readonly autoBinWidthCheckboxStringProperty: ReadOnlyProperty<string>;
+  readonly binWidthControlStringProperty: ReadOnlyProperty<string>;
+};
+
 export type SimA11yStrings = {
   readonly screenSummary: {
     readonly playAreaStringProperty: ReadOnlyProperty<string>;
@@ -57,9 +88,7 @@ export type SimA11yStrings = {
     readonly interactionHintStringProperty: ReadOnlyProperty<string>;
   };
   readonly currentDetailsStringProperty: ReadOnlyProperty<string>;
-  readonly controls: {
-    readonly exampleControlStringProperty: ReadOnlyProperty<string>;
-  };
+  readonly controls: SharedControlA11yStrings;
 };
 
 /**
@@ -68,7 +97,8 @@ export type SimA11yStrings = {
  */
 export type SimPreferenceStrings = {
   readonly titleStringProperty: ReadOnlyProperty<string>;
-  readonly exampleToggleStringProperty: ReadOnlyProperty<string>;
+  readonly showDiagnosticsStringProperty: ReadOnlyProperty<string>;
+  readonly showDiagnosticsDescriptionStringProperty: ReadOnlyProperty<string>;
 };
 
 /**
@@ -103,34 +133,64 @@ export class StringManager {
    * Each property updates automatically when the locale changes.
    */
   public getScreenNames(): {
-    readonly simStringProperty: ReadOnlyProperty<string>;
+    readonly introStringProperty: ReadOnlyProperty<string>;
+    readonly labStringProperty: ReadOnlyProperty<string>;
   } {
     return {
-      simStringProperty: stringProperties.screens.simStringProperty,
+      introStringProperty: stringProperties.screens.introStringProperty,
+      labStringProperty: stringProperties.screens.labStringProperty,
     };
   }
 
-  /**
-   * Accessibility (Interactive Description) StringProperties.
-   *
-   * Returns the reactive `a11y` string tree used by the parallel DOM:
-   *   - `screenSummary.*` — play-area / control-area overview and an interaction
-   *     hint, read by `SimScreenSummaryContent`.
-   *   - `currentDetails` — a paragraph describing the simulation's current state.
-   *     In a real sim, derive a live version from model Properties (see
-   *     LunarLander's ScreenSummaryContent for the canonical pattern).
-   *
-   * Add `accessibleName` / `accessibleHelpText` strings for individual controls
-   * to the `a11y` group too, then read them through this same nested tree.
-   */
-  public getA11yStrings(): SimA11yStrings {
-    return stringProperties.a11y;
+  /** Accessibility strings for the Intro screen. */
+  public getIntroA11yStrings() {
+    return stringProperties.a11y.intro;
+  }
+
+  /** Accessibility strings for the Lab screen. */
+  public getLabA11yStrings() {
+    return stringProperties.a11y.lab;
+  }
+
+  /** Labels for the source panel: source choice, connection, diagnostics. */
+  public getSourceStrings() {
+    return stringProperties.source;
+  }
+
+  /** Labels for the acquisition panel: interval, run length, transport buttons. */
+  public getAcquisitionStrings() {
+    return stringProperties.acquisition;
+  }
+
+  /** Labels for the live count-rate readout. */
+  public getReadoutStrings() {
+    return stringProperties.readout;
+  }
+
+  /** Column headings and the empty-state message for the data table. */
+  public getTableStrings() {
+    return stringProperties.table;
+  }
+
+  /** Row labels for the statistics panel. */
+  public getStatisticsStrings() {
+    return stringProperties.statistics;
+  }
+
+  /** Axis titles, curve names, and binning labels for the histogram. */
+  public getHistogramStrings() {
+    return stringProperties.histogram;
+  }
+
+  /** Axis titles for the Intro screen's count-rate chart. */
+  public getRateChartStrings() {
+    return stringProperties.rateChart;
   }
 
   /**
    * Simulation-specific preference labels shown in Preferences → Simulation.
    */
-  public getPreferences(): SimPreferenceStrings {
+  public getPreferences() {
     return stringProperties.preferences;
   }
 }

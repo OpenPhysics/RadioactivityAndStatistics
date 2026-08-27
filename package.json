@@ -1,16 +1,15 @@
 {
-  "name": "scenerystack-template",
+  "name": "radioactivity-and-measurements",
   "private": true,
   "version": "0.0.0",
   "type": "module",
-  "description": "GitHub template for OpenPhysics SceneryStack sims (rename + scaffold-screens for one or N screens).",
+  "description": "A SceneryStack simulation: Radioactivity and Measurements.",
   "license": "AGPL-3.0-or-later",
   "repository": {
     "type": "git",
-    "url": "https://github.com/OpenPhysics/SceneryStackTemplate.git"
+    "url": "https://github.com/OpenPhysics/RadioactivityAndMeasurements.git"
   },
   "keywords": [
-    "template",
     "simulation",
     "SceneryStack",
     "interactive",
@@ -48,6 +47,7 @@
     "@biomejs/biome": "^2.5.8",
     "@playwright/test": "^1.62.1",
     "@types/node": "^24.13.3",
+    "@types/web-bluetooth": "^0.0.21",
     "happy-dom": "^20.11.2",
     "jsdom": "^30.0.1",
     "playwright": "^1.62.1",

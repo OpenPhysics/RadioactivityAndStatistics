@@ -1,135 +1,193 @@
-# Implementation Notes - SceneryStack Template
+# Implementation notes — Radioactivity and Measurements
 
-Developer-facing notes on the **SceneryStackTemplate** scaffold. **Replace and expand this file when
-forking** to describe your sim's real architecture (see Stern Gerlach or Light Propagation for
-target quality). Until then, this documents what the template provides out of the box.
+Architecture, the PASCO Bluetooth protocol, and the decisions that are not
+obvious from the code.
 
-## Architecture Overview
+## Shape of the sim
 
-SceneryStackTemplate is the fleet-canonical starting point for new SceneryStack sims (one or N screens).
-It demonstrates Model–View separation, color profiles, localization, reset behavior, accessibility
-reference wiring, and reusable common components — **without** domain physics.
+Two screens over one shared acquisition model.
 
 ```
-main.ts
-  └─ SimScreen             (Screen<SimModel, SimScreenView>)
-       ├─ SimModel          state + logic  (src/sim-screen/model/)  ← stub: add physics here
-       └─ SimScreenView     visuals        (src/sim-screen/view/)
-            ├─ SimScreenSummaryContent     (PDOM overview — reference a11y pattern)
-            └─ SimKeyboardHelpContent      (keyboard help dialog)
-
-src/common/
-  ├─ SimPanel.ts           pre-themed panel (uses SimColors)
-  ├─ SimButtonOptions.ts   flat button / combo-box option bundles
-  └─ TimeModel.ts          composable play/pause + elapsed time
-
-src/preferences/
-  ├─ SimPreferencesModel   sim-specific pref state
-  ├─ SimPreferencesNode    pref UI in Preferences → Simulation
-  └─ simQueryParameters    QueryStringMachine declarations
+src/
+  common/
+    hardware/   PascoProtocol.ts  GeigerCounterDevice.ts  webBluetoothSupport.ts
+    model/      RadioactivityModel.ts  CountSource.ts  SimulatedCountSource.ts
+                GeigerCountSource.ts  Statistics.ts  Histogram.ts  GaussianFit.ts
+                CountSample.ts  csvExport.ts  ConnectionState.ts
+    view/       SourcePanel  AcquisitionPanel  DataTableNode  StatisticsPanel
+                HistogramNode  CountRateChartNode  CountRateDisplayNode
+                DistributionControlsPanel  currentDetailsProperty  downloadCsv
+  intro/        model/IntroModel.ts  view/IntroScreenView.ts
+  lab/          model/LabModel.ts    view/LabScreenView.ts
 ```
 
-Data flows Model → View through AXON `Property` objects (`.link()` / `.lazyLink()`). The view never
-integrates physics; the model never imports scenery.
+`IntroModel` and `LabModel` **compose** `RadioactivityModel` rather than extend
+it. Composition keeps the shared model free of any one screen's assumptions:
+the Lab screen adds curve-visibility state without the Intro screen carrying it,
+and neither screen can quietly change acquisition semantics for the other.
 
-## Forking checklist
+## The count-source abstraction
 
-### Automated rename + scaffold (recommended)
+The single most load-bearing decision in the sim.
 
-```sh
-npm run rename -- --id my-sim --name "My Simulation"
-npm run scaffold-screens -- --screens Intro,Lab   # or omit --screens for one screen
-npm run check
+A count source exposes exactly one number: a monotonically increasing running
+total of events since reset. The acquisition model owns the timebase — at the
+end of each counting interval it subtracts the total it saw at the interval's
+start.
+
+That is what lets a Bluetooth device sampling on its own clock and a random
+generator sampling on the sim's clock feed *literally the same code path*. A
+hardware source advances its total from BLE notifications; a simulated source
+advances it from `step(dt)`; neither knows what an interval is. Nothing
+downstream — statistics, histogram, fit, table, export — branches on the source.
+
+A corollary worth stating: `GeigerCountSource.step()` is deliberately empty. A
+real source must keep accumulating decays while the sim's clock is paused,
+because the physical process does not stop when a user presses pause.
+
+## PASCO Bluetooth protocol
+
+Ported from PASCO's own Python library,
+[PASCOscientific/pasco_python](https://github.com/PASCOscientific/pasco_python)
+(`pasco_ble_device.py` for the transport, `datasheets.py` for the device tables).
+
+**Neither open PASCO library supports this device.** The Python library lists
+`'Geiger'` in its `_not_compatible_devices`, and the
+[`pasco-ble`](https://github.com/veillette/pascoTS) npm package's datasheet
+covers interfaces 1025–1057 only. The Geiger counter is interface **1064**. Its
+tables *are* present in `datasheets.py` even though the transport refuses to talk
+to it, so the device description below is transcribed, not guessed.
+
+### GATT layout
+
+Every PASCO UUID has the form
+
+```
+4a5c000<S>-000<C>-0000-0000-5c1e741f1c00
 ```
 
-Or from the workspace: `Baton/scripts/create-sim.sh --repo MySim --name "My Simulation"`.
+where `<S>` is the service id and `<C>` the characteristic id. `C = 0` addresses
+the service itself; service 0 is the device service, and a sensor on channel N
+is served by service N + 1.
 
-`scripts/rename-sim.ts` updates sim-level identifiers (package id, Colors, Preferences).
-`scripts/scaffold-screens.ts` emits fleet-named screen folders and wires main/strings/icons.
+| Characteristic | Id | Direction |
+|---|---|---|
+| service | 0 | — |
+| send command | 2 | host → device |
+| receive | 3 | device → host (notify) |
+| send ack | 5 | host → device (streaming flow control) |
 
-### Manual steps (after rename/scaffold or if skipping the scripts)
+### The device
 
-1. **`doc/model.md`** — educator physics (equations, ranges, simplifications).
-2. **`doc/implementation-notes.md`** — this file, rewritten for your architecture.
-3. **Screen model(s)** — real Properties, `step(dt)`, `reset()`; compose `TimeModel` if animated.
-4. **Screen view(s)** — play area + controls; wire `ResetAllButton` to `model.reset()`.
-5. **`*Colors.ts`** — sim palette (default + projector profiles).
-6. **Locale JSON** — title, strings, `a11y` keys; register locales in `init.ts`.
-7. **`public/icons/icon.svg`** → `npm run icons`; align theme color in `index.html` / vite config.
-8. **`tests/setup.ts`** — `init({ name: … })` must match `package.json` name after rename.
-9. **`CLAUDE.md`** — sim-specific file map and pitfalls for AI assistants.
-
-## Common components (keep when forking)
-
-### SimPanel
-
-Every control panel should use `SimPanel` so projector-mode switching is automatic:
-
-```typescript
-import { SimPanel } from "../../common/SimPanel.js";
-const panel = new SimPanel(content);
-const panelWide = new SimPanel(content, { xMargin: 20 });
-```
-
-### TimeModel
-
-Compose into your screen model for animation (do not subclass `TimeModel`):
-
-```typescript
-export class MyModel implements TModel {
-  public readonly timer = new TimeModel();  // pass true to auto-play on startup
-
-  public step(dt: number): void {
-    this.timer.step(dt);
-    // physics uses this.timer.timeProperty.value
-  }
-  public reset(): void { this.timer.reset(); /* restore initial state */ }
-}
-```
-
-Wire `TimeControlNode` to `model.timer.isPlayingProperty` in the view.
-
-### SimButtonOptions
-
-Spread flat button options into every push/round button and `TimeControlNode` (see `CLAUDE.md`).
-Use `SIM_COMBO_BOX_OPTIONS` + `LIGHT_SURFACE_TEXT_FILL` for light control surfaces on dark panels.
-
-## Accessibility (reference implementation)
-
-The template is the **canonical OpenPhysics a11y reference**:
-
-- PDOM `accessibleName` on interactive nodes (prefer live `StringProperty`s).
-- `SimScreenSummaryContent` with a live `currentDetailsContent` `DerivedProperty` over model state.
-- Explicit `pdomOrder` + `SimKeyboardHelpContent`.
-- Strings under `a11y` in locale JSON → `StringManager.getA11yStrings()`.
-
-Full checklist: [Baton/ACCESSIBILITY.md](https://github.com/OpenPhysics/Baton/blob/main/ACCESSIBILITY.md).
-
-## Testing (fleet layout — keep when forking)
-
-| Path | Purpose |
+| | |
 |---|---|
-| `vitest.config.ts` | `happy-dom`; `setupFiles: ["./tests/setup.ts"]`; `execArgv: ["--expose-gc"]` |
-| `tests/setup.ts` | Canvas/AudioContext mocks + `init()` before SceneryStack imports |
-| `tests/TimeModel.test.ts` | **Replace** with real model/physics tests mirroring `src/` |
-| `tests/memory-leak.test.ts` | WeakRef + `forceGC` dispose regression |
-| `tests/fuzz/fuzz.spec.ts` | Optional Playwright smoke via `?fuzz` |
+| Interface | 1064, `WirelessGM`, advertised as `Geiger Counter` |
+| Model | PS-3238 |
+| Sensor | 2079 on channel 0, hence service 1 |
+| Measurement 0 | `CountRate`, uint16 LE, unit type CountsPerSample |
+| Measurement 1 | `TubeVoltage`, uint16 LE, volts (nominally 450–600) |
 
-Run `npm test`. Expand `memory-leak.test.ts` when adding runtime-created nodes or Property links.
+A sample payload is therefore 4 bytes. The advertised name packs the interface
+id: `"<type> <serial><flags><code>"`, e.g. `Geiger Counter 123-456Xe`, where the
+9th character of the trailing token is base-64 for `interfaceId − 1024` in
+PASCO's own alphabet (`0-9`, `K-Z`, `A-J`, `a-z`, `*`, `#`). 1064 encodes as
+`'e'`. `isGeigerCounterName` prefers that encoded id and falls back to the
+advertised device type, so a device whose name says "Geiger Counter" but whose
+id says otherwise is refused rather than misread.
 
-## Multi-screen simulations
+### Polling, not streaming
 
-Default is single-screen. To add screens, see **`doc/multi-screen.md`**: per-screen folders mirroring
-`src/sim-screen/`, `StringManager` screen-name getters, optional shared root model, a shared
-`src/common/{SimName}ScreenIcons.ts` module (`create{Screen}Icon()` factories wired as
-`homeScreenIcon` / `navigationBarIcon`), and register all screens in `main.ts`.
+PASCO devices can stream periodically, but **the command that sets the sample
+period is not published in any of PASCO's open code**, and this device's
+datasheet default is a 30 s window — far too coarse for counting statistics.
+So the sim polls with `GCMD_READ_ONE_SAMPLE` (0x05) at 10 Hz and keeps the
+timebase itself, tied to the user's chosen counting interval.
 
-## PWA
+### The one open question
 
-After `npm run build`, the sim is installable offline via Workbox (`dist/manifest.webmanifest`).
+The datasheet calls measurement 0 "CountRate" with unit type *CountsPerSample* —
+counts accumulated over the device's sample window. What that register does under
+one-shot polling could not be confirmed against any document, and could not be
+confirmed against hardware from the development environment.
 
-## Known template stubs (remove when forking)
+Rather than bake in a guess, both plausible readings are implemented and
+selectable, and the raw register is exposed in the UI so the behaviour can be
+identified in seconds with a device in hand:
 
-- `SimModel.step()` / `reset()` — empty placeholders until you add physics.
-- Placeholder play-area content in `SimScreenView` — replace with real UI.
-- `tests/TimeModel.test.ts` — sample only; add tests for your model under `tests/`.
+| Mode | Reading | How to recognise it |
+|---|---|---|
+| `cumulative` (default) | register free-runs; difference successive reads | raw register climbs steadily and never resets |
+| `perSampleWindow` | each new value is one window's count; sum the changes | raw register hovers near a small value and does not accumulate |
+
+`cumulative` is the default because differencing is self-correcting: a missed
+poll loses nothing, since the next delta spans the gap. Differencing is done
+modulo 2¹⁶ so a register wraparound reads as a small positive delta, not a
+65 000-count drop.
+
+Turn on **Preferences → Simulation → Show Geiger counter diagnostics** (or
+`?showDiagnostics=true`) to see the raw register and tube voltage; switch modes
+there or with `?registerMode=perSampleWindow`.
+
+### Web Bluetooth constraints
+
+- `requestDevice` only opens its picker during a **user gesture**. `connect()`
+  runs synchronously up to that call, so the button listener must not `await`
+  anything first — and the listener therefore calls it directly.
+- Services must be declared in `optionalServices` before they can be touched,
+  and the channel count is unknown until after discovery, so services 0–4 are
+  requested up front.
+- Only Chromium-based browsers implement the API, and only in a secure context.
+  `webBluetoothSupport.ts` distinguishes those cases so the panel can say which
+  one applies instead of failing on a click.
+
+## Charts
+
+Built on SceneryStack's **bamboo**: `ChartTransform` + `BarPlot` / `LinePlot` /
+`ScatterPlot`, with `GridLineSet`, `TickMarkSet`, and `TickLabelSet`.
+
+**No `AxisLine` nodes.** This one bit, and is worth recording. `AxisLine` anchors
+to model coordinate 0. Both charts autoscale, so once a run narrows the
+histogram's x-range to, say, 12–36, the vertical axis line renders at view
+x = −64 — far outside the plot — which inflated the node's bounds by ~170 px and
+pushed the chart underneath the neighbouring panel. `ChartRectangle` already
+strokes the plot border, and both axes start at zero, so the axis lines were
+redundant as well as harmful.
+
+**Charts are wrapped in an `AlignBox`,** not positioned with a one-off `centerX`.
+Chart bounds change as the axes rescale to incoming data; an `AlignBox` with
+fixed `alignBounds` re-centres automatically, and `maxWidth` is the backstop that
+caps the chart at the gap it has been given.
+
+**`minContentWidth` on a `GridBox` is a per-cell floor,** not a total. Using it
+to size the statistics panel made the panel twice as wide as intended and
+squeezed the histogram; `preferredWidth` is the right knob.
+
+## Colour
+
+The three model curves are a categorical set, validated for colour-vision
+separation against both the default (dark) and projector (light) chart surfaces.
+The histogram bars are deliberately **not** a fourth categorical hue — a
+four-colour set fails the separation floor in both profiles — but a neutral fill,
+so the data reads as ground and the model curves as figure.
+
+Each curve also carries its own dash pattern (solid / dashed / dash-dot), and the
+legend swatches reproduce it, so the three stay separable in greyscale, in print,
+and to a colour-blind reader without relying on hue at all.
+
+## Testing
+
+`npm test` — 98 unit tests under `tests/`, mirroring `src/`:
+
+| File | Covers |
+|---|---|
+| `common/hardware/PascoProtocol.test.ts` | UUIDs, name parsing, base-64 alphabet, packet decode, register wraparound |
+| `common/model/Statistics.test.ts` | Welford accuracy, log-gamma, Poisson (variance = mean), Poisson→Gaussian convergence |
+| `common/model/Histogram.test.ts` | binning, conservation, per-bin Poisson expectation, bin-count targeting |
+| `common/model/GaussianFit.test.ts` | parameter recovery, degrees of freedom, robustness on ragged data |
+| `common/model/csvExport.test.ts` | column contract, CRLF, quoting, filename stamping |
+| `common/model/RadioactivityModel.test.ts` | counting cycle, auto-stop, count conservation, interval drift, dt clamping |
+| `memory-leak.test.ts` | `WeakRef` dispose regression on `SimulatedCountSource` |
+
+The protocol tests matter disproportionately: that code was reverse-engineered
+rather than written against a spec, and a wrong UUID or mis-decoded name fails at
+connect time with a browser error that says nothing about the cause.

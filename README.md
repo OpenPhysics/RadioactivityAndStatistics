@@ -1,18 +1,33 @@
-# SceneryStack Template
+# Radioactivity and Measurements
 
-[![CI](https://github.com/OpenPhysics/SceneryStackTemplate/actions/workflows/ci.yml/badge.svg)](https://github.com/OpenPhysics/SceneryStackTemplate/actions/workflows/ci.yml)
+[![CI](https://github.com/OpenPhysics/RadioactivityAndMeasurements/actions/workflows/ci.yml/badge.svg)](https://github.com/OpenPhysics/RadioactivityAndMeasurements/actions/workflows/ci.yml)
 
-A reusable SceneryStack simulation template for one or N screens, built with
-[SceneryStack](https://scenerystack.org/), Vite 8, TypeScript 7, and Biome 2.
+A counting-statistics laboratory. Measure radioactive decay — from a simulated
+source or from a real **PASCO Wireless Geiger Counter (PS-3238)** over Web
+Bluetooth — then see why repeated measurements of an unchanging source never
+repeat, and check the result against Poisson and Gaussian theory.
 
 ## Features
 
-- SceneryStack scaffold with model/view separation (`rename` + `scaffold-screens` for one or N screens)
-- English, Spanish, and French localization via `StringManager`
-- Default and projector color profiles
-- Progressive Web App (installable, offline-capable)
-- Git hooks for Biome pre-commit checks
-- Shared GitHub Actions CI via `OpenPhysics/Baton`
+- **Live counting** — count rate from the most recent interval, with the
+  in-progress interval visible as it fills.
+- **Real hardware over Web Bluetooth** — connects directly to a PASCO Wireless
+  Geiger Counter from Chrome or Edge, with no driver, app, or install.
+- **A simulated source with a known λ** — the only way to check the theory
+  against an answer known in advance; real sources never tell you theirs.
+- **Runs you control** — set the counting interval and how many intervals a run
+  collects, then Record / Stop / Clear.
+- **Data table and CSV export** — every measurement is legible as text and
+  exportable, with the run's conditions and statistics in the file header.
+- **Distribution and statistics** — histogram, mean, standard deviation,
+  standard deviation of the mean, and √mean side by side.
+- **Theory on top of the data** — Poisson prediction, the Gaussian limit with
+  σ = √mean, and a Levenberg–Marquardt Gaussian fit reporting reduced χ².
+- **Accessible** — full keyboard navigation, screen-reader summaries that stay
+  live as data arrives, and charts whose curves are separable by dash pattern as
+  well as by colour.
+- English, Spanish, and French localization; default and projector color
+  profiles; installable as an offline PWA.
 
 ## Quick Start
 
@@ -22,6 +37,11 @@ npm run icons    # generate PNG icons from public/icons/icon.svg
 npm start        # dev server → http://localhost:5173
 ```
 
+To use a real counter: switch **Source** to *Geiger counter*, press **Connect**,
+and pick the device from the browser's Bluetooth dialog. This needs Chrome or
+Edge on an HTTPS page (or `localhost`); the sim says so explicitly when the
+browser cannot do it, and the simulated source stays available either way.
+
 ## Scripts
 
 | Command | Description |
@@ -29,40 +49,39 @@ npm start        # dev server → http://localhost:5173
 | `npm start` / `npm run dev` | Start Vite dev server |
 | `npm run build` | Type-check + production build → `dist/` |
 | `npm run preview` | Preview the production build locally |
-| `npm test` | Run Vitest unit tests (includes memory-leak suite) |
+| `npm test` | Run Vitest unit tests (protocol, statistics, binning, fit, export, model) |
 | `npm run test:fuzz` | Optional Playwright fuzz smoke (`?fuzz&ea`, default 30s) |
-| `npm run test:fuzz -- 90` | Same fuzz for 90 seconds (`--duration 90` or `FUZZ_DURATION=90` also work) |
 | `npm run test:fuzz:quick` | Shorter fuzz smoke (10s) |
 | `npm run test:fuzz:long` | Longer fuzz smoke (300s) |
-| `npm run check` | TypeScript type check |
+| `npm run check` | TypeScript type check (app, scripts, tests) |
 | `npm run lint` | Biome lint check |
 | `npm run format` | Auto-format all files |
 | `npm run fix` | Lint + auto-fix |
 | `npm run icons` | Regenerate PNG icons from `public/icons/icon.svg` |
-| `npm run rename` | Sim-level fork/rename (`--id`, `--name`) |
-| `npm run scaffold-screens` | Emit N fleet-named screen packages from `sim-screen/` (`--shared-model` optional) |
 | `npm run release` | `check && lint && build`, then version patch + push tags |
 | `npm run clean` | Remove `dist/` |
 
-`npm run release` intentionally skips `npm test` — template tests are samples. Real sims should append `&& npm test` (before the version bump) so a release cannot ship a failing suite.
-
-New sims start at `version: "0.0.0"` in `package.json`. Bump only when cutting a release (for example `npm version patch` and a matching git tag). Keep `name` in kebab-case; it is separate from the SceneryStack sim identifier in `src/init.ts`.
+Useful query parameters: `?showDiagnostics=true` reveals the counter's raw count
+register and GM tube voltage, and `?registerMode=perSampleWindow` switches how
+that register is interpreted (see `CLAUDE.md`).
 
 ## Tech Stack
 
 | Tool | Version | Purpose |
 |---|---|---|
 | [SceneryStack](https://scenerystack.org/) | ^3.0.0 | Simulation framework |
+| [bamboo](https://scenerystack.org/) | (SceneryStack) | Charting for the histogram and rate chart |
 | [Vite](https://vitejs.dev/) | ^8 | Build tool + dev server |
 | [TypeScript](https://www.typescriptlang.org/) | ^7 | Type-safe JavaScript |
 | [Biome](https://biomejs.dev/) | ^2.5 | Linting + formatting |
+| [Vitest](https://vitest.dev/) | ^4 | Unit tests |
 | [vite-plugin-pwa](https://vite-pwa-org.netlify.app/) | ^1 | PWA + service worker |
+| [Web Bluetooth](https://developer.mozilla.org/en-US/docs/Web/API/Web_Bluetooth_API) | — | PASCO Geiger counter transport (Chromium only) |
 
 ## License
 
-GNU Affero General Public License v3.0 — see [OpenPhysics org license](https://github.com/OpenPhysics/.github/blob/main/LICENSE).
+AGPL-3.0-or-later. See the [org-wide license](https://github.com/OpenPhysics/.github/blob/main/LICENSE).
 
 ## Contributing
 
-See [OpenPhysics contributing guidelines](https://github.com/OpenPhysics/.github/blob/main/CONTRIBUTING.md).
-Report bugs via GitHub Issues; use org issue templates.
+See the [org-wide contributing guide](https://github.com/OpenPhysics/.github/blob/main/CONTRIBUTING.md).

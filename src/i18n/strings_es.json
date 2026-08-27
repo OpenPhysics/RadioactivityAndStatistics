@@ -1,21 +1,140 @@
 {
-  "title": "Plantilla de Simulación",
+  "title": "Radiactividad y mediciones",
   "screens": {
-    "sim": "Sim"
+    "intro": "Intro",
+    "lab": "Laboratorio"
+  },
+  "source": {
+    "title": "Fuente",
+    "simulated": "Simulada",
+    "geigerCounter": "Contador Geiger",
+    "activity": "Actividad",
+    "activityUnits": "cuentas/s",
+    "connect": "Conectar",
+    "disconnect": "Desconectar",
+    "statusDisconnected": "Sin conexión",
+    "statusConnecting": "Conectando…",
+    "statusConnected": "Conectado",
+    "statusError": "Problema de conexión",
+    "unsupportedBrowser": "Este navegador no puede acceder a dispositivos Bluetooth. Use Chrome o Edge.",
+    "insecureContext": "El Bluetooth requiere una página segura (HTTPS).",
+    "tubeVoltage": "Voltaje del tubo",
+    "rawRegister": "Registro sin procesar",
+    "registerMode": "Lectura del registro",
+    "registerModeCumulative": "Acumulativa",
+    "registerModePerWindow": "Por ventana"
+  },
+  "acquisition": {
+    "title": "Medición",
+    "interval": "Intervalo de conteo",
+    "samplesPerRun": "Muestras por serie",
+    "continuous": "Grabar continuamente",
+    "record": "Grabar",
+    "stop": "Detener",
+    "clear": "Borrar",
+    "exportCsv": "Exportar CSV"
+  },
+  "readout": {
+    "countRate": "Tasa de conteo",
+    "countsPerSecond": "cuentas/s",
+    "counts": "cuentas",
+    "thisInterval": "Este intervalo",
+    "collected": "{{count}} de {{total}} muestras",
+    "collectedContinuous": "{{count}} muestras"
+  },
+  "table": {
+    "title": "Datos",
+    "columnIndex": "n.º",
+    "columnTime": "t (s)",
+    "columnCounts": "Cuentas",
+    "columnRate": "Cuentas/s",
+    "empty": "Todavía no hay datos. Pulse Grabar para empezar."
+  },
+  "statistics": {
+    "title": "Estadísticas",
+    "sampleCount": "Muestras (N)",
+    "mean": "Media",
+    "standardDeviation": "Desv. estándar (s)",
+    "standardErrorOfMean": "Desv. estándar de la media",
+    "poissonPrediction": "√media (Poisson)",
+    "fittedSigma": "σ ajustada",
+    "reducedChiSquare": "χ² / gdl",
+    "notAvailable": "—"
+  },
+  "histogram": {
+    "title": "Distribución",
+    "axisCounts": "Cuentas por intervalo",
+    "axisFrequency": "Número de mediciones",
+    "poisson": "Poisson (λ = media)",
+    "gaussianPrediction": "Gaussiana (σ = √media)",
+    "gaussianFit": "Ajuste gaussiano",
+    "binWidth": "Ancho de clase",
+    "autoBinWidth": "Ancho de clase automático",
+    "noFit": "Datos insuficientes para el ajuste"
+  },
+  "rateChart": {
+    "title": "Tasa de conteo en el tiempo",
+    "axisTime": "Tiempo (s)",
+    "axisRate": "Cuentas/s"
   },
   "a11y": {
-    "screenSummary": {
-      "playArea": "El área de juego muestra el contenido principal de la simulación.",
-      "controlArea": "El área de control tiene un botón Restablecer todo que devuelve la simulación a su estado inicial.",
-      "interactionHint": "Explora la simulación interactuando con sus controles."
+    "intro": {
+      "screenSummary": {
+        "playArea": "El área de juego muestra una lectura en vivo de la tasa de conteo, un gráfico de la tasa de conteo en el tiempo y una tabla de las mediciones recogidas.",
+        "controlArea": "El área de control permite elegir una fuente de conteo, fijar el intervalo de conteo y la longitud de la serie, iniciar y detener la grabación, exportar los datos y reiniciar la simulación.",
+        "interactionHint": "Pulse Grabar para recoger una serie de mediciones y luego lea la tasa de conteo y la tabla."
+      },
+      "currentDetails": "Todavía no se ha recogido ninguna medición.",
+      "currentDetailsRecording": "Grabando. {{count}} mediciones recogidas hasta ahora. Última tasa de conteo: {{rate}} cuentas por segundo.",
+      "currentDetailsCollected": "{{count}} mediciones recogidas. Media de {{mean}} cuentas por intervalo, desviación estándar de {{deviation}}, y la raíz cuadrada de la media es {{poisson}}.",
+      "controls": {
+        "sourceRadioGroup": "Fuente de conteo",
+        "activitySlider": "Actividad simulada en cuentas por segundo",
+        "connectButton": "Conectar un contador Geiger por Bluetooth",
+        "disconnectButton": "Desconectar el contador Geiger",
+        "intervalControl": "Intervalo de conteo en segundos",
+        "samplesPerRunControl": "Número de muestras de una serie",
+        "continuousCheckbox": "Grabar continuamente en vez de detenerse tras un número fijo de muestras",
+        "recordButton": "Empezar a grabar mediciones",
+        "stopButton": "Dejar de grabar mediciones",
+        "clearButton": "Borrar las mediciones recogidas",
+        "exportButton": "Exportar las mediciones recogidas como archivo CSV",
+        "registerModeControl": "Cómo se interpreta el registro de conteo sin procesar del contador Geiger"
+      }
     },
-    "currentDetails": "La simulación está en su estado inicial.",
-    "controls": {
-      "exampleControl": "Control de ejemplo"
+    "lab": {
+      "screenSummary": {
+        "playArea": "El área de juego muestra un histograma de las mediciones recogidas, con curvas de Poisson y gaussianas opcionales superpuestas, junto a un panel de estadísticas.",
+        "controlArea": "El área de control permite elegir una fuente de conteo, fijar el intervalo de conteo y la longitud de la serie, iniciar y detener la grabación, elegir qué curvas teóricas mostrar, fijar el ancho de clase, exportar los datos y reiniciar la simulación.",
+        "interactionHint": "Recoja una serie de mediciones y luego compare el histograma con las curvas de Poisson y gaussianas."
+      },
+      "currentDetails": "Todavía no se ha recogido ninguna medición.",
+      "currentDetailsRecording": "Grabando. {{count}} mediciones recogidas hasta ahora. Última tasa de conteo: {{rate}} cuentas por segundo.",
+      "currentDetailsCollected": "{{count}} mediciones recogidas. Media de {{mean}} cuentas por intervalo, desviación estándar de {{deviation}}, y la raíz cuadrada de la media es {{poisson}}.",
+      "controls": {
+        "sourceRadioGroup": "Fuente de conteo",
+        "activitySlider": "Actividad simulada en cuentas por segundo",
+        "connectButton": "Conectar un contador Geiger por Bluetooth",
+        "disconnectButton": "Desconectar el contador Geiger",
+        "intervalControl": "Intervalo de conteo en segundos",
+        "samplesPerRunControl": "Número de muestras de una serie",
+        "continuousCheckbox": "Grabar continuamente en vez de detenerse tras un número fijo de muestras",
+        "recordButton": "Empezar a grabar mediciones",
+        "stopButton": "Dejar de grabar mediciones",
+        "clearButton": "Borrar las mediciones recogidas",
+        "exportButton": "Exportar las mediciones recogidas como archivo CSV",
+        "registerModeControl": "Cómo se interpreta el registro de conteo sin procesar del contador Geiger",
+        "poissonCheckbox": "Mostrar la predicción de Poisson",
+        "gaussianPredictionCheckbox": "Mostrar la predicción gaussiana con sigma igual a la raíz cuadrada de la media",
+        "gaussianFitCheckbox": "Mostrar la gaussiana de mejor ajuste",
+        "autoBinWidthCheckbox": "Elegir automáticamente el ancho de clase del histograma",
+        "binWidthControl": "Ancho de clase del histograma en cuentas"
+      }
     }
   },
   "preferences": {
     "title": "Simulación",
-    "exampleToggle": "Ejemplo de alternancia"
+    "showDiagnostics": "Mostrar diagnósticos del contador Geiger",
+    "showDiagnosticsDescription": "Añade el registro de conteo sin procesar y el voltaje del tubo GM al panel de la fuente, para comprobar cómo informa sus cuentas un contador conectado."
   }
 }

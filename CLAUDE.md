@@ -1,223 +1,122 @@
-# CLAUDE.md — SceneryStack Template
+# CLAUDE.md — Radioactivity and Measurements
 
-Sim-specific context for AI assistants. General SceneryStack guidance: [OpenPhysics/.github/CLAUDE.md](https://github.com/OpenPhysics/.github/blob/main/CLAUDE.md).
+Sim-specific context for AI assistants. General SceneryStack guidance:
+[OpenPhysics/.github/CLAUDE.md](https://github.com/OpenPhysics/.github/blob/main/CLAUDE.md).
 
-## Project
+## What this sim is
 
-Reusable SceneryStack template (one or N screens) and **canonical accessibility reference** for
-OpenPhysics sims. Prefer `Baton/scripts/create-sim.sh` (or GitHub **Use this template** +
-`npm run rename` + `npm run scaffold-screens`) to fork it. For multi-screen sims, see
-[`doc/multi-screen.md`](doc/multi-screen.md).
+A counting-statistics laboratory. Measure radioactive decay — simulated, or from
+a real **PASCO Wireless Geiger Counter (PS-3238)** over Web Bluetooth — and
+compare the resulting distribution against Poisson and Gaussian theory.
+
+The physics is in [`doc/model.md`](doc/model.md); the architecture, the PASCO
+protocol, and the traps are in
+[`doc/implementation-notes.md`](doc/implementation-notes.md). Read those before
+changing the acquisition or hardware layers.
 
 ## Key files
 
 | File | Purpose |
 |---|---|
-| `src/SimColors.ts` | All `ProfileColorProperty` instances |
-| `src/SimConstants.ts` | Named numeric constants (layout px, physics SI units) |
-| `src/SimNamespace.ts` | Namespace for color property names |
-| `src/i18n/StringManager.ts` | Singleton localized string accessor |
-| `src/sim-screen/SimScreen.ts` | Screen wrapper |
-| `src/sim-screen/model/SimModel.ts` | Simulation state and logic |
-| `src/sim-screen/view/SimScreenView.ts` | Visual nodes, layout, `screenSummaryContent` + `pdomOrder` |
-| `src/sim-screen/view/SimScreenSummaryContent.ts` | Accessible screen summary (reference a11y pattern) |
-| `src/sim-screen/view/SimKeyboardHelpContent.ts` | Keyboard-help dialog content |
-| `src/common/SimPanel.ts` | Pre-themed `Panel` wrapper (uses `SimColors` automatically) |
-| `src/common/SimButtonOptions.ts` | Flat button-appearance option bundles + light-control-surface combo-box options |
-| `src/common/TimeModel.ts` | Composable play/pause + elapsed-time model for animated sims |
-| `scripts/generate-icons.ts` | PNG icons from `public/icons/icon.svg` |
-| `scripts/rename-sim.ts` | Sim-level fork/rename (package id + metadata, Colors, Constants, Panel, ButtonOptions, Preferences) |
-| `scripts/scaffold-screens.ts` | Emit N screen packages + wire main/strings/icons |
+| `src/common/model/RadioactivityModel.ts` | The shared acquisition model — sources, counting cycle, run, derived statistics. Both screens compose it |
+| `src/common/model/CountSource.ts` | The `TCountSource` contract: a monotonic running total. The reason hardware and simulated data share one code path |
+| `src/common/model/SimulatedCountSource.ts` | Poisson event generator (the default source, and the only one with a known λ) |
+| `src/common/model/GeigerCountSource.ts` | Hardware source: connection lifecycle, polling loop, register interpretation |
+| `src/common/hardware/PascoProtocol.ts` | Pure wire-format encode/decode for the PASCO BLE protocol |
+| `src/common/hardware/GeigerCounterDevice.ts` | The **only** file touching `navigator.bluetooth` |
+| `src/common/model/Statistics.ts` | Welford statistics, log-gamma, Poisson and Gaussian distributions |
+| `src/common/model/Histogram.ts` | Integer binning, bin-width choice, per-bin expected frequencies |
+| `src/common/model/GaussianFit.ts` | Levenberg–Marquardt fit with Poisson weighting |
+| `src/common/view/HistogramNode.ts` | Lab centrepiece: bars plus the three model curves |
+| `src/common/view/CountRateChartNode.ts` | Intro strip chart: rate against time, with the mean |
+| `src/RadioactivityAndMeasurementsColors.ts` | All `ProfileColorProperty` instances, including the validated chart palette |
+| `src/RadioactivityAndMeasurementsConstants.ts` | Layout, chart sizes, acquisition ranges, timing guards |
 
-## Common components
+## Things that will bite
 
-### SimPanel
+**Web Bluetooth needs the user gesture.** `requestDevice` only opens its picker
+during a real user gesture, and `GeigerCounterDevice.connect()` runs
+synchronously up to that call. Do not put an `await` before it in a button
+listener, and do not wrap the listener in anything that defers.
 
-Every control panel and info box in the sim should use `SimPanel` so that
-default/projector color switching is automatic:
+**`GeigerCountSource.step()` is empty on purpose.** A real source must keep
+counting while the sim clock is paused — the decays do not stop.
 
-```typescript
-import { SimPanel } from "../../common/SimPanel.js";
-const panel = new SimPanel(content);              // uses SimColors defaults
-const panel = new SimPanel(content, { xMargin: 20 }); // override any PanelOption
-```
+**Never add an `AxisLine` to these charts.** It anchors to model coordinate 0.
+Both charts autoscale away from zero, so the line renders far outside the plot,
+inflates the node's bounds, and shoves the chart under a control panel.
+`ChartRectangle` already strokes the border.
 
-### TimeModel
+**Chart position is owned by an `AlignBox`.** Chart bounds change as axes
+rescale; do not replace it with a one-off `centerX`.
 
-For simulations with animation, compose `TimeModel` into your screen model:
+**`minContentWidth` on a `GridBox` is per cell**, not a total. Use
+`preferredWidth` to size a panel's grid.
 
-```typescript
-import { TimeModel } from "../../common/TimeModel.js";
+**The histogram bars are not a categorical hue.** They are a neutral fill so the
+three model curves (a validated categorical trio) read against them. A
+four-colour set fails colour-vision separation in both profiles. Each curve also
+carries a dash pattern; keep it if you touch the colours.
 
-export class MyModel implements TModel {
-  public readonly timer = new TimeModel();   // starts paused; pass true to auto-play
+**The `CountRate` register interpretation is unverified against hardware.** See
+`GeigerCountSource`'s class comment. Both plausible modes are implemented and
+user-selectable, and the raw register is exposed for diagnosis. If someone
+confirms the real behaviour on a device, collapse this to the correct mode and
+delete the other — do not leave a guess baked in silently.
 
-  public step(dt: number): void {
-    this.timer.step(dt);
-    // use this.timer.timeProperty.value for physics
-  }
-  public reset(): void { this.timer.reset(); /* … */ }
-}
-```
+## Query parameters
 
-Wire the view to `TimeControlNode` from `scenerystack/scenery-phet` binding on
-`model.timer.isPlayingProperty`.
+| Parameter | Effect |
+|---|---|
+| `?showDiagnostics=true` | Show the raw count register and GM tube voltage in the source panel |
+| `?registerMode=cumulative\|perSampleWindow` | How the raw count register becomes a running total |
 
-### SimButtonOptions
+Also surfaced in Preferences → Simulation.
 
-SceneryStack's push/round buttons default to a 3-D/beveled look; every button in the sim
-should be flat instead. Spread these into the relevant options object:
+## Hardware testing
 
-```typescript
-import { FLAT_RESET_ALL_BUTTON_OPTIONS, FLAT_RECTANGULAR_BUTTON_OPTIONS } from "../../common/SimButtonOptions.js";
+Requires a PASCO Wireless Geiger Counter, powered on, and Chrome or Edge on
+HTTPS or `localhost`. There is no way to exercise the Bluetooth path in CI or in
+a headless environment — `tests/common/hardware/PascoProtocol.test.ts` covers the
+wire format, and everything above the transport is exercised through the
+simulated source.
 
-const resetAllButton = new ResetAllButton({ ...FLAT_RESET_ALL_BUTTON_OPTIONS, listener: () => {...} });
-const exampleButton = new RectangularPushButton({ ...FLAT_RECTANGULAR_BUTTON_OPTIONS, content, listener });
-```
-
-`FLAT_PLAY_PAUSE_STEP_BUTTON_OPTIONS` spreads into `TimeControlNode`'s `playPauseStepButtonOptions`;
-`TIME_CONTROL_SPEED_RADIO_OPTIONS` fixes `TimeControlNode`'s speed-radio label color, which
-otherwise defaults to black text on the sim's dark default-mode panels. `SIM_COMBO_BOX_OPTIONS`
-themes a `ComboBox`'s button/list chrome to the light control surface below; pair item labels
-with `LIGHT_SURFACE_TEXT_FILL` (not `SimColors.textColorProperty`, which is for panel-fill text).
-
-`SimColors.ts` backs this with a "light control surfaces" section —
-`controlSurfaceColorProperty`, `controlSurfaceDisabledColorProperty`,
-`controlSurfaceTextColorProperty` — identical white/dark-text values in both default and
-projector profiles, so any component that must stay light regardless of theme (combo boxes,
-flat buttons, editable fields) keeps readable contrast automatically.
-
-## Accessibility
-
-This template is the **canonical accessibility reference** for OpenPhysics sims. It ships with
-the three required layers wired up: PDOM names, a `SimScreenSummaryContent`, and an explicit
-`pdomOrder` + `SimKeyboardHelpContent`. A11y strings live under the `a11y` key in each locale
-JSON, exposed via `StringManager.getA11yStrings()`. When building a real sim, make
-`currentDetailsContent` a live `DerivedProperty` over model state and add `accessibleName`s to
-every interactive node. Full convention and checklist: [Baton/ACCESSIBILITY.md](https://github.com/OpenPhysics/Baton/blob/main/ACCESSIBILITY.md).
-
-## Compliance carve-outs
-
-A clean fork of this template rarely needs compliance carve-outs — root `SimConstants.ts`,
-`*Colors.ts`, `*Namespace.ts`, standard screen layout, and full a11y wiring pass Baton's
-compliance check out of the box. Document carve-outs in the forked sim's `CLAUDE.md` only when
-you introduce a deliberate deviation (nested constants, hardcoded interaction fills, etc.).
-
-### `package.json` overrides
-
-JSON cannot carry comments, so the rationale for forced transitive pins lives here. Prefer
-**tilde (`~`) or exact** versions — caret (`^`) lets minors drift under what is meant to be a
-hard pin. Dependabot ignores these three names (see `.github/dependabot.yml`) so it does not
-open PRs that fight the overrides. Revisit when SceneryStack drops or re-pins them upstream.
-
-| Override | Pin | Why |
-|---|---|---|
-| `lodash` | `~4.18.1` | SceneryStack declares `~4.17.12`. Bump clears Dependabot/npm advisories patched in 4.18.x (e.g. GHSA-r5fr-rjxr-66jc, GHSA-f23m-r3pf-42rh). |
-| `three` | `~0.125.2` | SceneryStack declares `^0.104.0`. Floor is 0.125.0 for GHSA-fq6p-x6j3-cmmq (ReDoS). Staying on the 0.125 line avoids a larger API jump; **0.125.x still has open CVEs** (e.g. XSS GHSA-7vvq-7r29-5vg3, fixed only in ≥0.137.0). Remove this override if/when SceneryStack stops depending on `three` or pins a patched line itself. |
-| `brace-expansion` | `~5.0.9` | Transitive via `vite-plugin-pwa` / Workbox. Clears npm audit (originally GHSA-mh99-v99m-4gvg; keep ≥5.0.9 for GHSA-rgw5-rvv9-x895). |
+To check the register mode on a real device: connect, enable diagnostics, and
+watch the raw register. Climbing monotonically → `cumulative`. Hovering near a
+small value → `perSampleWindow`.
 
 ## Testing
 
-Fleet-standard Vitest layout (keep when forking):
-
-| Path | Purpose |
-|---|---|
-| `vitest.config.ts` | `happy-dom` environment; `setupFiles: ["./tests/setup.ts"]`; `execArgv: ["--expose-gc"]` |
-| `tests/setup.ts` | Canvas / AudioContext mocks + `init({ name: "…" })` before SceneryStack imports |
-| `tests/TimeModel.test.ts` | Sample model unit tests — replace with real physics tests |
-| `tests/memory-leak.test.ts` | WeakRef + `forceGC` dispose regression (fleet pattern) |
-| `tests/fuzz/fuzz.spec.ts` | Optional Playwright fuzz smoke via joist `?fuzz` |
-| `playwright.config.ts` | Chromium project + Vite webServer for fuzz |
-
-- Put unit tests only under root `tests/`, mirroring `src/` (never co-locate or use `__tests__/`).
-- Change the `name` passed to `init()` in `tests/setup.ts` to match `package.json` after `npm run rename`.
-- Run `npm test`. CI runs the suite when a `test` script is present.
-- Expand `memory-leak.test.ts` for any component that adds/removes nodes or links Properties at
-  runtime (see OpticsLab for a deep suite).
-- Optional: `npm run test:fuzz` / `test:fuzz:quick` / `test:fuzz:long` (not part of default CI).
-  Duration is 30s by default; override with `npm run test:fuzz -- 90` or `FUZZ_DURATION=90`.
-
-## Commands
+Fleet-standard Vitest layout; unit tests live in root `tests/`, mirroring `src/`.
 
 ```bash
 npm run lint && npm run check && npm run build && npm test
 ```
 
-| Command | Description |
-|---|---|
-| `npm start` / `npm run dev` | Vite dev server |
-| `npm run build` | Type-check + production build |
-| `npm run build:single` | Single-file build mode |
-| `npm run check` | TypeScript (`tsc --noEmit` + scripts project) |
-| `npm run lint` / `npm run fix` | Biome check / auto-fix |
-| `npm test` | Vitest unit tests |
-| `npm run test:fuzz` | Playwright fuzz smoke (`?fuzz&ea`, 30s; `npm run test:fuzz -- 90` to change) |
-| `npm run test:fuzz:quick` | 10s fuzz |
-| `npm run test:fuzz:long` | 300s fuzz |
-| `npm run icons` | Regenerate PWA icons (+ placeholder screenshots) |
-| `npm run rename` | Sim-level fork/rename (`--id`, `--name`) |
-| `npm run scaffold-screens` | Emit N screens (`--screens Intro,Lab`) |
-| `npm run release` | `check && lint && build`, then version patch + push tags |
+`npm run release` skips `npm test` by default — append `&& npm test` before the
+version bump if cutting a release from this repo.
 
-`npm run release` intentionally skips `npm test` — template tests are samples. Real sims should append `&& npm test` before the version bump.
+## Compliance carve-outs
 
-## Customizing a new sim from this template
+None. Standard screen layout, root `*Colors.ts` / `*Constants.ts` /
+`*Namespace.ts`, six-section README, full a11y wiring.
 
-### Recommended: Baton create-sim
+### `package.json` overrides
 
-```sh
-Baton/scripts/create-sim.sh --repo Friction --name "Friction" --screens Intro,Lab --shared-model --onboard
-```
+JSON cannot carry comments, so the rationale for forced transitive pins lives
+here. Dependabot ignores these three names (see `.github/dependabot.yml`).
 
-### Manual: GitHub template + rename + scaffold
+| Override | Pin | Why |
+|---|---|---|
+| `lodash` | `~4.18.1` | SceneryStack declares `~4.17.12`. Bump clears advisories patched in 4.18.x (GHSA-r5fr-rjxr-66jc, GHSA-f23m-r3pf-42rh). |
+| `three` | `~0.125.2` | SceneryStack declares `^0.104.0`. Floor is 0.125.0 for GHSA-fq6p-x6j3-cmmq. **0.125.x still has open CVEs** (XSS GHSA-7vvq-7r29-5vg3, fixed only in ≥0.137.0). Remove if SceneryStack drops `three` or pins a patched line. |
+| `brace-expansion` | `~5.0.9` | Transitive via `vite-plugin-pwa` / Workbox. Clears npm audit (GHSA-mh99-v99m-4gvg; keep ≥5.0.9 for GHSA-rgw5-rvv9-x895). |
 
-```sh
-npm install
-npm run rename -- --id friction --name "Friction"
-npm run scaffold-screens -- --screens Intro,Lab --shared-model
-# omit --screens for one screen named after the sim; omit --shared-model for independent models
-npm run fix     # required: both scripts reorder imports, which Biome then sorts
-npm run check
-```
-
-`rename` updates package id and metadata, display name, and every sim-level `Sim*`
-(Colors, Constants, Namespace, Panel, ButtonOptions, Preferences, query parameters).
-`scaffold-screens` owns screen folders (fleet naming: `src/intro/`, not `intro-screen/`).
-After both steps no `Sim*` identifier should remain — `grep -rn '\bSim[A-Z_]' src` to confirm.
-
-### Manual checklist (if not using the scripts)
-
-1. **Rename** — replace `scenerystack-template` / `SceneryStack Template` / `Sim` prefix in `init.ts`, `brand.ts`, `package.json` (name, description, keywords, repository.url), Colors/Constants/Namespace/Panel/ButtonOptions/Preferences
-2. **Screens** — run `scaffold-screens` or mirror `sim-screen/` into kebab folders
-3. **Locale** — add `strings_XX.json`, register in `StringManager`, add locale to `init.ts` `availableLocales`
-4. **Icon** — edit `public/icons/icon.svg`, run `npm run icons`; match theme color in `index.html` / `vite.config.ts`
-5. **Colors** — edit `*Colors.ts` (`default` + `projector` profiles per property)
-
-## Multi-screen sims
-
-Full guide: [`doc/multi-screen.md`](doc/multi-screen.md)
-
-Summary:
-- Prefer `npm run scaffold-screens -- --screens Intro,Lab` (add `--shared-model` for a root model)
-- Or create a screen folder mirroring `src/sim-screen/` for each screen (kebab names, no `-screen` suffix)
-- Add screen-name keys to all locale JSON files; nest `a11y` per screen
-- Expose new getters in `StringManager.getScreenNames()` / `get{Screen}A11yStrings()`
-- Shared state: `--shared-model` → `common/model/SharedModel.ts` composed per screen (rename to a domain type)
-- Add `src/common/{SimName}ScreenIcons.ts` with `create{Screen}Icon()` factories; wire `homeScreenIcon` + `navigationBarIcon` on each Screen
-- Register all screens in the `screens` array in `main.ts`
-
-## Using this template beyond a direct copy
-
-| Approach | When to use |
-|---|---|
-| **`Baton/scripts/create-sim.sh`** | Agents / fleet — create repo, rename, scaffold N screens |
-| **GitHub template** ("Use this template") | Humans starting a sim in the browser |
-| `npm run rename` + `scaffold-screens` | Same, after cloning the template |
-| **npm workspace / monorepo** | Managing a suite of sims with shared tooling |
-| **git subtree** for pulling updates | Keeping forks in sync with template improvements |
-
-See `doc/multi-screen.md` → "Using this template beyond a direct copy" for details.
+`@types/web-bluetooth` is a devDependency and must stay in the `types` array of
+**both** `tsconfig.json` and `tsconfig.test.json` — the tests import `src`
+modules that reference the Web Bluetooth globals.
 
 ## PWA
 
-After `npm run build`, the sim is installable offline via Workbox (`dist/manifest.webmanifest`).
+After `npm run build`, the sim is installable offline via Workbox
+(`dist/manifest.webmanifest`).

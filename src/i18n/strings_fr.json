@@ -1,21 +1,140 @@
 {
-  "title": "Modèle de Simulation",
+  "title": "Radioactivité et mesures",
   "screens": {
-    "sim": "Sim"
+    "intro": "Intro",
+    "lab": "Labo"
+  },
+  "source": {
+    "title": "Source",
+    "simulated": "Simulée",
+    "geigerCounter": "Compteur Geiger",
+    "activity": "Activité",
+    "activityUnits": "coups/s",
+    "connect": "Connecter",
+    "disconnect": "Déconnecter",
+    "statusDisconnected": "Non connecté",
+    "statusConnecting": "Connexion…",
+    "statusConnected": "Connecté",
+    "statusError": "Problème de connexion",
+    "unsupportedBrowser": "Ce navigateur ne peut pas accéder aux appareils Bluetooth. Utilisez Chrome ou Edge.",
+    "insecureContext": "Le Bluetooth exige une page sécurisée (HTTPS).",
+    "tubeVoltage": "Tension du tube",
+    "rawRegister": "Registre brut",
+    "registerMode": "Lecture du registre",
+    "registerModeCumulative": "Cumulative",
+    "registerModePerWindow": "Par fenêtre"
+  },
+  "acquisition": {
+    "title": "Mesure",
+    "interval": "Intervalle de comptage",
+    "samplesPerRun": "Échantillons par série",
+    "continuous": "Enregistrer en continu",
+    "record": "Enregistrer",
+    "stop": "Arrêter",
+    "clear": "Effacer",
+    "exportCsv": "Exporter en CSV"
+  },
+  "readout": {
+    "countRate": "Taux de comptage",
+    "countsPerSecond": "coups/s",
+    "counts": "coups",
+    "thisInterval": "Cet intervalle",
+    "collected": "{{count}} échantillons sur {{total}}",
+    "collectedContinuous": "{{count}} échantillons"
+  },
+  "table": {
+    "title": "Données",
+    "columnIndex": "n°",
+    "columnTime": "t (s)",
+    "columnCounts": "Coups",
+    "columnRate": "Coups/s",
+    "empty": "Aucune donnée. Appuyez sur Enregistrer pour commencer."
+  },
+  "statistics": {
+    "title": "Statistiques",
+    "sampleCount": "Échantillons (N)",
+    "mean": "Moyenne",
+    "standardDeviation": "Écart-type (s)",
+    "standardErrorOfMean": "Écart-type de la moyenne",
+    "poissonPrediction": "√moyenne (Poisson)",
+    "fittedSigma": "σ ajusté",
+    "reducedChiSquare": "χ² / ddl",
+    "notAvailable": "—"
+  },
+  "histogram": {
+    "title": "Distribution",
+    "axisCounts": "Coups par intervalle",
+    "axisFrequency": "Nombre de mesures",
+    "poisson": "Poisson (λ = moyenne)",
+    "gaussianPrediction": "Gaussienne (σ = √moyenne)",
+    "gaussianFit": "Ajustement gaussien",
+    "binWidth": "Largeur de classe",
+    "autoBinWidth": "Largeur de classe automatique",
+    "noFit": "Données insuffisantes pour l'ajustement"
+  },
+  "rateChart": {
+    "title": "Taux de comptage dans le temps",
+    "axisTime": "Temps (s)",
+    "axisRate": "Coups/s"
   },
   "a11y": {
-    "screenSummary": {
-      "playArea": "La zone de jeu affiche le contenu principal de la simulation.",
-      "controlArea": "La zone de contrôle comporte un bouton Tout réinitialiser qui ramène la simulation à son état initial.",
-      "interactionHint": "Explorez la simulation en interagissant avec ses commandes."
+    "intro": {
+      "screenSummary": {
+        "playArea": "La zone de jeu affiche un taux de comptage en direct, un graphique du taux de comptage dans le temps et un tableau des mesures recueillies.",
+        "controlArea": "La zone de contrôle permet de choisir une source de comptage, de régler l'intervalle de comptage et la longueur de la série, de démarrer et d'arrêter l'enregistrement, d'exporter les données et de réinitialiser la simulation.",
+        "interactionHint": "Appuyez sur Enregistrer pour recueillir une série de mesures, puis lisez le taux de comptage et le tableau."
+      },
+      "currentDetails": "Aucune mesure n'a encore été recueillie.",
+      "currentDetailsRecording": "Enregistrement en cours. {{count}} mesures recueillies jusqu'ici. Dernier taux de comptage : {{rate}} coups par seconde.",
+      "currentDetailsCollected": "{{count}} mesures recueillies. Moyenne de {{mean}} coups par intervalle, écart-type de {{deviation}}, et la racine carrée de la moyenne vaut {{poisson}}.",
+      "controls": {
+        "sourceRadioGroup": "Source de comptage",
+        "activitySlider": "Activité simulée en coups par seconde",
+        "connectButton": "Connecter un compteur Geiger par Bluetooth",
+        "disconnectButton": "Déconnecter le compteur Geiger",
+        "intervalControl": "Intervalle de comptage en secondes",
+        "samplesPerRunControl": "Nombre d'échantillons dans une série",
+        "continuousCheckbox": "Enregistrer en continu au lieu de s'arrêter après un nombre défini d'échantillons",
+        "recordButton": "Commencer l'enregistrement des mesures",
+        "stopButton": "Arrêter l'enregistrement des mesures",
+        "clearButton": "Effacer les mesures recueillies",
+        "exportButton": "Exporter les mesures recueillies en fichier CSV",
+        "registerModeControl": "Interprétation du registre brut de comptage du compteur Geiger"
+      }
     },
-    "currentDetails": "La simulation est dans son état initial.",
-    "controls": {
-      "exampleControl": "Contrôle d'exemple"
+    "lab": {
+      "screenSummary": {
+        "playArea": "La zone de jeu affiche un histogramme des mesures recueillies, avec des courbes de Poisson et gaussiennes facultatives par-dessus, à côté d'un panneau de statistiques.",
+        "controlArea": "La zone de contrôle permet de choisir une source de comptage, de régler l'intervalle de comptage et la longueur de la série, de démarrer et d'arrêter l'enregistrement, de choisir les courbes théoriques affichées, de régler la largeur de classe, d'exporter les données et de réinitialiser la simulation.",
+        "interactionHint": "Recueillez une série de mesures, puis comparez l'histogramme aux courbes de Poisson et gaussiennes."
+      },
+      "currentDetails": "Aucune mesure n'a encore été recueillie.",
+      "currentDetailsRecording": "Enregistrement en cours. {{count}} mesures recueillies jusqu'ici. Dernier taux de comptage : {{rate}} coups par seconde.",
+      "currentDetailsCollected": "{{count}} mesures recueillies. Moyenne de {{mean}} coups par intervalle, écart-type de {{deviation}}, et la racine carrée de la moyenne vaut {{poisson}}.",
+      "controls": {
+        "sourceRadioGroup": "Source de comptage",
+        "activitySlider": "Activité simulée en coups par seconde",
+        "connectButton": "Connecter un compteur Geiger par Bluetooth",
+        "disconnectButton": "Déconnecter le compteur Geiger",
+        "intervalControl": "Intervalle de comptage en secondes",
+        "samplesPerRunControl": "Nombre d'échantillons dans une série",
+        "continuousCheckbox": "Enregistrer en continu au lieu de s'arrêter après un nombre défini d'échantillons",
+        "recordButton": "Commencer l'enregistrement des mesures",
+        "stopButton": "Arrêter l'enregistrement des mesures",
+        "clearButton": "Effacer les mesures recueillies",
+        "exportButton": "Exporter les mesures recueillies en fichier CSV",
+        "registerModeControl": "Interprétation du registre brut de comptage du compteur Geiger",
+        "poissonCheckbox": "Afficher la prédiction de Poisson",
+        "gaussianPredictionCheckbox": "Afficher la prédiction gaussienne avec sigma égal à la racine carrée de la moyenne",
+        "gaussianFitCheckbox": "Afficher la gaussienne ajustée",
+        "autoBinWidthCheckbox": "Choisir automatiquement la largeur de classe de l'histogramme",
+        "binWidthControl": "Largeur de classe de l'histogramme en coups"
+      }
     }
   },
   "preferences": {
     "title": "Simulation",
-    "exampleToggle": "Exemple de bascule"
+    "showDiagnostics": "Afficher les diagnostics du compteur Geiger",
+    "showDiagnosticsDescription": "Ajoute le registre brut de comptage et la tension du tube GM au panneau de la source, pour vérifier comment un compteur connecté rapporte ses coups."
   }
 }

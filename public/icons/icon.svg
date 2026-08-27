@@ -1,7 +1,30 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <!--
+    Radioactivity and Measurements.
+
+    A histogram of counts with the Poisson curve over it: the sim is about the
+    distribution of a measurement, not about the radiation itself. Colours are
+    the sim's own default-profile values (background, histogram bar, Poisson
+    curve) so the installed icon matches the app it launches.
+  -->
   <rect width="512" height="512" fill="#1a1a2e"/>
-  <circle cx="256" cy="256" r="180" fill="none" stroke="#4fc3f7" stroke-width="20"/>
-  <circle cx="256" cy="256" r="60" fill="#4fc3f7"/>
-  <ellipse cx="256" cy="256" rx="180" ry="60" fill="none" stroke="#4fc3f7" stroke-width="12" opacity="0.6" transform="rotate(30 256 256)"/>
-  <ellipse cx="256" cy="256" rx="180" ry="60" fill="none" stroke="#4fc3f7" stroke-width="12" opacity="0.6" transform="rotate(-30 256 256)"/>
+
+  <!-- Bars: the measured distribution, in the sim's neutral data fill. -->
+  <g fill="#8fa3c4">
+    <rect x="72"  y="352" width="52" height="88"/>
+    <rect x="130" y="296" width="52" height="144"/>
+    <rect x="188" y="216" width="52" height="224"/>
+    <rect x="246" y="152" width="52" height="288"/>
+    <rect x="304" y="232" width="52" height="208"/>
+    <rect x="362" y="320" width="52" height="120"/>
+  </g>
+
+  <!-- Poisson curve, in the sim's slot-1 categorical blue. -->
+  <path d="M 72 404 C 140 400 168 300 214 226 C 244 178 282 172 312 224
+           C 352 292 386 372 440 396"
+        fill="none" stroke="#3987e5" stroke-width="18"
+        stroke-linecap="round" stroke-linejoin="round"/>
+
+  <!-- Baseline. -->
+  <rect x="60" y="440" width="392" height="10" fill="#93a1bd"/>
 </svg>
