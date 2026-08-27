@@ -130,6 +130,10 @@
   "preferences": {
     "title": "Simulación",
     "showDiagnostics": "Mostrar diagnósticos del contador Geiger",
-    "showDiagnosticsDescription": "Añade el registro de conteo sin procesar y el voltaje del tubo GM al panel de la fuente, para comprobar cómo informa sus cuentas un contador conectado."
+    "showDiagnosticsDescription": "Añade el registro de conteo sin procesar y el voltaje del tubo GM al panel de la fuente, para comprobar cómo informa sus cuentas un contador conectado.",
+    "beepEnabled": "Pitido del contador Geiger",
+    "beepEnabledDescription": "Si se desmarca, silencia el indicador audible de cuentas en un contador Geiger inalámbrico PASCO conectado.",
+    "tubeVoltage": "Voltaje del tubo G-M",
+    "tubeVoltageDescription": "Polarización aplicada al tubo G-M de un contador conectado. Use un experimento de meseta para explorar cómo la tasa de cuentas depende del voltaje."
   }
 }

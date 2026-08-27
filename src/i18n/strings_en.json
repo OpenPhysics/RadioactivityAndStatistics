@@ -130,6 +130,10 @@
   "preferences": {
     "title": "Simulation",
     "showDiagnostics": "Show Geiger counter diagnostics",
-    "showDiagnosticsDescription": "Adds the raw count register and GM tube voltage to the source panel, for checking how a connected counter reports its counts."
+    "showDiagnosticsDescription": "Adds the raw count register and GM tube voltage to the source panel, for checking how a connected counter reports its counts.",
+    "beepEnabled": "Geiger counter beep",
+    "beepEnabledDescription": "When unchecked, silences the audible count indicator on a connected PASCO Wireless Geiger Counter.",
+    "tubeVoltage": "G-M tube voltage",
+    "tubeVoltageDescription": "Bias applied to a connected counter's G-M tube. Use a plateau experiment to explore how count rate depends on voltage."
   }
 }

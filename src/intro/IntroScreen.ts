@@ -21,7 +21,7 @@ type IntroScreenOptions = ScreenOptions & { tandem: Tandem };
 export class IntroScreen extends Screen<IntroModel, IntroScreenView> {
   public constructor(preferences: RadioactivityAndMeasurementsPreferencesModel, options: IntroScreenOptions) {
     super(
-      () => new IntroModel(),
+      () => new IntroModel(preferences),
       (model) =>
         new IntroScreenView(model, preferences.showDiagnosticsProperty, {
           tandem: options.tandem.createTandem("view"),

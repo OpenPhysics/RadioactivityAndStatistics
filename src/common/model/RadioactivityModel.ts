@@ -35,10 +35,15 @@ import {
 import type { CountSample } from "./CountSample.js";
 import { CountSourceType, type CountSourceTypeValue, type TCountSource } from "./CountSource.js";
 import { fitGaussian, type GaussianFitResult } from "./GaussianFit.js";
-import { GeigerCountSource } from "./GeigerCountSource.js";
+import { GeigerCountSource, type GeigerDeviceControls } from "./GeigerCountSource.js";
 import { chooseBinWidth, createHistogram, type Histogram } from "./Histogram.js";
 import { SimulatedCountSource } from "./SimulatedCountSource.js";
 import { computeStatistics, type SampleStatistics } from "./Statistics.js";
+
+export type RadioactivityModelOptions = {
+  /** Host-side Geiger controls from Preferences → Simulation. */
+  readonly geigerControls?: GeigerDeviceControls;
+};
 
 export class RadioactivityModel implements TModel {
   // ── Sources ────────────────────────────────────────────────────────────────
@@ -123,9 +128,9 @@ export class RadioactivityModel implements TModel {
   /** Retained so the automatic-bin-width listener can be removed on dispose. */
   private readonly autoBinWidthListener: () => void;
 
-  public constructor() {
+  public constructor(options?: RadioactivityModelOptions) {
     this.simulatedSource = new SimulatedCountSource(DEFAULT_ACTIVITY);
-    this.geigerSource = new GeigerCountSource();
+    this.geigerSource = new GeigerCountSource(options?.geigerControls ?? null);
 
     this.sourceTypeProperty = new Property<CountSourceTypeValue>(CountSourceType.SIMULATED);
     this.activeSourceProperty = new DerivedProperty(

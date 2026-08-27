@@ -130,6 +130,10 @@
   "preferences": {
     "title": "Simulation",
     "showDiagnostics": "Afficher les diagnostics du compteur Geiger",
-    "showDiagnosticsDescription": "Ajoute le registre brut de comptage et la tension du tube GM au panneau de la source, pour vérifier comment un compteur connecté rapporte ses coups."
+    "showDiagnosticsDescription": "Ajoute le registre brut de comptage et la tension du tube GM au panneau de la source, pour vérifier comment un compteur connecté rapporte ses coups.",
+    "beepEnabled": "Bip du compteur Geiger",
+    "beepEnabledDescription": "Décochez pour couper l'indicateur sonore des coups sur un compteur Geiger sans fil PASCO connecté.",
+    "tubeVoltage": "Tension du tube G-M",
+    "tubeVoltageDescription": "Polarisation appliquée au tube G-M d'un compteur connecté. Utilisez une expérience de plateau pour explorer comment le taux de coups dépend de la tension."
   }
 }

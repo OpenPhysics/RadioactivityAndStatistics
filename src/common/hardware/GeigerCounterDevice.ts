@@ -30,6 +30,7 @@ import {
   COMMAND,
   DEVICE_SERVICE_ID,
   decodeGeigerNotification,
+  enableBeeperCommand,
   GEIGER_ADVERTISED_NAME,
   GEIGER_SAMPLE_BYTES,
   GEIGER_SERVICE_ID,
@@ -39,6 +40,7 @@ import {
   parseAdvertisedName,
   pascoUuid,
   readOneSampleCommand,
+  setTubeVoltageCommand,
   toCommandBuffer,
 } from "./PascoProtocol.js";
 
@@ -255,6 +257,26 @@ export class GeigerCounterDevice {
     return sample;
   }
 
+  /**
+   * Enables or silences the audible count beep on the device.
+   *
+   * Capstone/SPARKvue call the same control; the power-button half-press still
+   * toggles beep locally and can override this until the next write.
+   */
+  public async setBeeperEnabled(enabled: boolean): Promise<void> {
+    await this.writeCommand(enableBeeperCommand(enabled));
+  }
+
+  /**
+   * Sets the G-M tube bias in volts.
+   *
+   * Manual mode (what this sim uses) sends the same value for the initial and
+   * final voltages in the wire payload.
+   */
+  public async setTubeVoltage(volts: number): Promise<void> {
+    await this.writeCommand(setTubeVoltageCommand(volts));
+  }
+
   /** Closes the connection and forgets all GATT handles. */
   public async disconnect(): Promise<void> {
     const device = this.device;
@@ -335,6 +357,15 @@ export class GeigerCounterDevice {
       pascoUuid(DEVICE_SERVICE_ID, CHARACTERISTIC.SEND_COMMAND),
     );
     await deviceCommand.writeValueWithoutResponse(toCommandBuffer([COMMAND.KEEPALIVE]));
+  }
+
+  /** Writes a command to the sensor service's command characteristic. */
+  private async writeCommand(command: ArrayBuffer): Promise<void> {
+    const characteristic = this.commandCharacteristic;
+    if (!(characteristic && this.isConnected)) {
+      throw new Error("Geiger counter is not connected");
+    }
+    await characteristic.writeValueWithoutResponse(command);
   }
 
   /** Drops GATT handles and fails any read still in flight. */

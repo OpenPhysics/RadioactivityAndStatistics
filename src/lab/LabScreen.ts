@@ -21,7 +21,7 @@ type LabScreenOptions = ScreenOptions & { tandem: Tandem };
 export class LabScreen extends Screen<LabModel, LabScreenView> {
   public constructor(preferences: RadioactivityAndMeasurementsPreferencesModel, options: LabScreenOptions) {
     super(
-      () => new LabModel(),
+      () => new LabModel(preferences),
       (model) =>
         new LabScreenView(model, preferences.showDiagnosticsProperty, {
           tandem: options.tandem.createTandem("view"),

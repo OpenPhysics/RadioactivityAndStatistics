@@ -26,8 +26,20 @@ import {
   GeigerCounterDevice,
   type GeigerDeviceInfo,
 } from "../hardware/GeigerCounterDevice.js";
+import { TUBE_VOLTAGE_CONTROL_RANGE } from "../hardware/PascoProtocol.js";
 import { ConnectionState, type ConnectionStateValue } from "./ConnectionState.js";
 import { CountSourceType, type CountSourceTypeValue, type TCountSource } from "./CountSource.js";
+
+/**
+ * Host-side controls for a connected Geiger counter, typically bound to
+ * Preferences → Simulation.
+ */
+export type GeigerDeviceControls = {
+  /** Whether the audible count beep is allowed. */
+  readonly beepEnabledProperty: TReadOnlyProperty<boolean>;
+  /** G-M tube bias setpoint in volts. */
+  readonly tubeVoltageProperty: TReadOnlyProperty<number>;
+};
 
 /**
  * How often the device is polled, in ms. Fast enough to resolve a one-second
@@ -74,6 +86,7 @@ export class GeigerCountSource implements TCountSource {
 
   private readonly totalCounts: NumberProperty;
   private readonly device: GeigerCounterDevice;
+  private readonly controls: GeigerDeviceControls | null;
 
   /** Handle of the polling timer, or null when not polling. */
   private pollTimerId: ReturnType<typeof setInterval> | null = null;
@@ -86,7 +99,12 @@ export class GeigerCountSource implements TCountSource {
 
   private consecutiveFailures = 0;
 
-  public constructor() {
+  /** Retained so preference listeners can be removed on dispose. */
+  private readonly beepEnabledListener: () => void;
+  private readonly tubeVoltageSetpointListener: () => void;
+
+  public constructor(controls: GeigerDeviceControls | null = null) {
+    this.controls = controls;
     this.connectionStateProperty = new Property<ConnectionStateValue>(ConnectionState.DISCONNECTED);
     this.errorMessageProperty = new Property<string | null>(null);
     this.deviceInfoProperty = new Property<GeigerDeviceInfo | null>(null);
@@ -96,6 +114,17 @@ export class GeigerCountSource implements TCountSource {
     this.totalCounts = new NumberProperty(0);
 
     this.device = new GeigerCounterDevice(() => this.handleUnexpectedDisconnect());
+
+    // Preference changes only reach the hardware while a counter is connected;
+    // failures are swallowed so a slider drag cannot tear down acquisition.
+    this.beepEnabledListener = () => {
+      this.applyBeeperSetting().catch(() => undefined);
+    };
+    this.tubeVoltageSetpointListener = () => {
+      this.applyTubeVoltageSetting().catch(() => undefined);
+    };
+    this.controls?.beepEnabledProperty.lazyLink(this.beepEnabledListener);
+    this.controls?.tubeVoltageProperty.lazyLink(this.tubeVoltageSetpointListener);
   }
 
   public get totalCountsProperty(): TReadOnlyProperty<number> {
@@ -134,6 +163,10 @@ export class GeigerCountSource implements TCountSource {
     this.isAvailableProperty.value = true;
     this.hasFlushedBacklog = false;
     this.consecutiveFailures = 0;
+
+    // Push Preferences → Simulation onto the device before polling starts so
+    // the first samples already reflect the chosen beep and bias.
+    await this.applyDeviceControls();
     this.startPolling();
   }
 
@@ -164,6 +197,8 @@ export class GeigerCountSource implements TCountSource {
 
   public dispose(): void {
     this.stopPolling();
+    this.controls?.beepEnabledProperty.unlink(this.beepEnabledListener);
+    this.controls?.tubeVoltageProperty.unlink(this.tubeVoltageSetpointListener);
     // Disposal cannot await, and a failure to close a link that is going away
     // anyway is not actionable.
     this.device.disconnect().catch(() => undefined);
@@ -174,6 +209,28 @@ export class GeigerCountSource implements TCountSource {
     this.tubeVoltageProperty.dispose();
     this.isAvailableProperty.dispose();
     this.totalCounts.dispose();
+  }
+
+  /** Writes the current preference values to a connected counter. */
+  private async applyDeviceControls(): Promise<void> {
+    await this.applyBeeperSetting();
+    await this.applyTubeVoltageSetting();
+  }
+
+  private async applyBeeperSetting(): Promise<void> {
+    if (!(this.controls && this.device.isConnected)) {
+      return;
+    }
+    await this.device.setBeeperEnabled(this.controls.beepEnabledProperty.value);
+  }
+
+  private async applyTubeVoltageSetting(): Promise<void> {
+    if (!(this.controls && this.device.isConnected)) {
+      return;
+    }
+    const volts = Math.round(this.controls.tubeVoltageProperty.value);
+    const clamped = Math.min(TUBE_VOLTAGE_CONTROL_RANGE.max, Math.max(TUBE_VOLTAGE_CONTROL_RANGE.min, volts));
+    await this.device.setTubeVoltage(clamped);
   }
 
   /** Begins the polling loop that keeps the running total current. */
@@ -200,7 +257,7 @@ export class GeigerCountSource implements TCountSource {
   /** Reads one sample and folds it into the running total. */
   private async poll(): Promise<void> {
     // A slow read must not queue up behind itself; skipping a tick is harmless
-    // because CUMULATIVE differencing spans whatever gap it leaves.
+    // because counts from a missed poll stay banked on the device until the next.
     if (this.isPolling || !this.device.isConnected) {
       return;
     }

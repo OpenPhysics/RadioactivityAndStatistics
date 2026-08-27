@@ -12,10 +12,20 @@
 
 import type { TModel } from "scenerystack/joist";
 import { RadioactivityModel } from "../../common/model/RadioactivityModel.js";
+import type { RadioactivityAndMeasurementsPreferencesModel } from "../../preferences/RadioactivityAndMeasurementsPreferencesModel.js";
 
 export class IntroModel implements TModel {
   /** Sources, counting cycle, collected run, and derived statistics. */
-  public readonly acquisition = new RadioactivityModel();
+  public readonly acquisition: RadioactivityModel;
+
+  public constructor(preferences: RadioactivityAndMeasurementsPreferencesModel) {
+    this.acquisition = new RadioactivityModel({
+      geigerControls: {
+        beepEnabledProperty: preferences.beepEnabledProperty,
+        tubeVoltageProperty: preferences.tubeVoltageProperty,
+      },
+    });
+  }
 
   public reset(): void {
     this.acquisition.reset();

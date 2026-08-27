@@ -10,6 +10,7 @@
 
 import { logGlobal } from "scenerystack/phet-core";
 import { QueryStringMachine } from "scenerystack/query-string-machine";
+import { TUBE_VOLTAGE_CONTROL_RANGE } from "../common/hardware/PascoProtocol.js";
 import RadioactivityAndMeasurementsNamespace from "../RadioactivityAndMeasurementsNamespace.js";
 
 const radioactivityAndMeasurementsQueryParameters = QueryStringMachine.getAll({
@@ -22,6 +23,30 @@ const radioactivityAndMeasurementsQueryParameters = QueryStringMachine.getAll({
   showDiagnostics: {
     type: "boolean",
     defaultValue: false,
+    public: true,
+  },
+
+  /**
+   * Whether a connected Geiger counter may beep on each count.
+   *
+   * Surfaced in Preferences → Simulation; applied over BLE when a counter is
+   * connected.
+   */
+  beepEnabled: {
+    type: "boolean",
+    defaultValue: true,
+    public: true,
+  },
+
+  /**
+   * G-M tube bias setpoint in volts for a connected Geiger counter.
+   *
+   * Surfaced as a slider in Preferences → Simulation. Range matches SPARKvue's
+   * Geiger control panel.
+   */
+  tubeVoltage: {
+    type: "number",
+    defaultValue: TUBE_VOLTAGE_CONTROL_RANGE.default,
     public: true,
   },
 });

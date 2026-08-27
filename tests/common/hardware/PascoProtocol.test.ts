@@ -14,6 +14,7 @@ import {
   decodeGeigerNotification,
   decodeGeigerPayload,
   decodePascoBase64,
+  enableBeeperCommand,
   GEIGER_INTERFACE_ID,
   GEIGER_SAMPLE_BYTES,
   isGeigerCounterName,
@@ -22,6 +23,7 @@ import {
   pascoUuid,
   RESPONSE,
   readOneSampleCommand,
+  setTubeVoltageCommand,
   toCommandBuffer,
 } from "../../../src/common/hardware/PascoProtocol.js";
 
@@ -116,6 +118,31 @@ describe("command encoding", () => {
     const buffer = toCommandBuffer([COMMAND.KEEPALIVE]);
     expect(buffer).toBeInstanceOf(ArrayBuffer);
     expect(Array.from(new Uint8Array(buffer))).toEqual([0x00]);
+  });
+
+  it("enables or silences the Geiger beep via CUSTOM sub-opcode 0x02", () => {
+    expect(Array.from(new Uint8Array(enableBeeperCommand(true)))).toEqual([COMMAND.CUSTOM, 0x02, 1]);
+    expect(Array.from(new Uint8Array(enableBeeperCommand(false)))).toEqual([COMMAND.CUSTOM, 0x02, 0]);
+  });
+
+  it("sets tube voltage as two little-endian uint16 values", () => {
+    // Manual mode sends the same bias for both payload voltages.
+    expect(Array.from(new Uint8Array(setTubeVoltageCommand(500)))).toEqual([
+      COMMAND.CUSTOM,
+      0x01,
+      0xf4,
+      0x01,
+      0xf4,
+      0x01,
+    ]);
+    expect(Array.from(new Uint8Array(setTubeVoltageCommand(180, 697)))).toEqual([
+      COMMAND.CUSTOM,
+      0x01,
+      0xb4,
+      0x00,
+      0xb9,
+      0x02,
+    ]);
   });
 });
 

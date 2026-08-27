@@ -143,6 +143,23 @@ Turn on **Preferences → Simulation → Show Geiger counter diagnostics** (or
 `?showDiagnostics=true`) to watch the raw register and tube voltage. A healthy
 tube reads 500 V; a zero there means no sample is being decoded at all.
 
+### Beep and tube-voltage control
+
+SPARKvue's WASM backend (`PascoBLEDriver::GMEnableBeeper` /
+`GMSetVoltage`) writes `GCMD_CUSTOM` (0x37) to channel 0's command
+characteristic — the same one used for one-shot reads:
+
+| Command | Bytes |
+|---|---|
+| Enable beep | `[0x37, 0x02, enabled]` (`enabled` is 0 or 1) |
+| Set tube voltage | `[0x37, 0x01, V₁_lo, V₁_hi, V₂_lo, V₂_hi]` (little-endian volts) |
+
+Manual mode (what Preferences uses) sends the same voltage for both `V₁` and
+`V₂`. SPARKvue's "automatic" optimum is `(0, 0)`; this sim does not offer that
+mode. The Preferences slider spans 180–697 V in 8 V steps (SPARKvue's range),
+default 500 V, and is reapplied whenever the value changes while a counter is
+connected. The beep checkbox likewise pushes immediately over BLE.
+
 ### Web Bluetooth constraints
 
 - `requestDevice` only opens its picker during a **user gesture**. `connect()`

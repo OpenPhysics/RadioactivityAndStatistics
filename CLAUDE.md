@@ -75,6 +75,8 @@ undercounts by roughly 15%.
 | Parameter | Effect |
 |---|---|
 | `?showDiagnostics=true` | Show the raw count register and GM tube voltage in the source panel |
+| `?beepEnabled=false` | Silence the audible count beep on a connected Geiger counter |
+| `?tubeVoltage=500` | G-M tube bias setpoint in volts (Preferences slider; applied over BLE) |
 
 Also surfaced in Preferences → Simulation.
 

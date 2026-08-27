@@ -62,8 +62,8 @@ browser cannot do it, and the simulated source stays available either way.
 | `npm run clean` | Remove `dist/` |
 
 Useful query parameters: `?showDiagnostics=true` reveals the counter's raw count
-register and GM tube voltage, and `?registerMode=perSampleWindow` switches how
-that register is interpreted (see `CLAUDE.md`).
+register and GM tube voltage, `?beepEnabled=false` silences the count beep, and
+`?tubeVoltage=500` sets the G-M tube bias (see `CLAUDE.md`).
 
 ## Tech Stack
 

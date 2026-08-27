@@ -98,6 +98,10 @@ export type SimPreferenceStrings = {
   readonly titleStringProperty: ReadOnlyProperty<string>;
   readonly showDiagnosticsStringProperty: ReadOnlyProperty<string>;
   readonly showDiagnosticsDescriptionStringProperty: ReadOnlyProperty<string>;
+  readonly beepEnabledStringProperty: ReadOnlyProperty<string>;
+  readonly beepEnabledDescriptionStringProperty: ReadOnlyProperty<string>;
+  readonly tubeVoltageStringProperty: ReadOnlyProperty<string>;
+  readonly tubeVoltageDescriptionStringProperty: ReadOnlyProperty<string>;
 };
 
 /**

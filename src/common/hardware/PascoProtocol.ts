@@ -69,12 +69,31 @@ export const OPTIONAL_SERVICE_UUIDS: readonly string[] = [0, 1, 2, 3, 4].map((se
   pascoUuid(serviceId, CHARACTERISTIC.SERVICE),
 );
 
-/** Generic command opcodes (`GCMD_*` in the Python library). */
+/** Generic command opcodes (`GCMD_*` in the Python library / SPARKvue). */
 export const COMMAND = {
   /** No-op write used as a keepalive on the device service. */
   KEEPALIVE: 0x00,
   /** Request one immediate sample; second byte is the expected payload size. */
   READ_ONE_SAMPLE: 0x05,
+  /**
+   * Device-specific control command. Sub-opcodes for the Geiger counter are in
+   * {@link GEIGER_CONTROL}; the rest of the payload is command-specific.
+   */
+  CUSTOM: 0x37,
+} as const;
+
+/**
+ * Sub-opcodes for {@link COMMAND.CUSTOM} on the Wireless Geiger Counter.
+ *
+ * Recovered from SPARKvue's `PascoBLEDriver::GMSetVoltage` /
+ * `GMEnableBeeper` (wasm), which write these to channel 0's command
+ * characteristic — the same one used for one-shot sample reads.
+ */
+export const GEIGER_CONTROL = {
+  /** Set the G-M tube bias: two little-endian uint16 voltages in volts. */
+  SET_VOLTAGE: 0x01,
+  /** Enable or silence the audible count beep: one byte, 1 or 0. */
+  ENABLE_BEEPER: 0x02,
 } as const;
 
 /** Response opcodes appearing in the first byte of a notification. */
@@ -121,8 +140,22 @@ export const GEIGER_ADVERTISED_NAME = "Geiger Counter";
  */
 export const GEIGER_SAMPLE_BYTES = 4;
 
-/** Nominal operating range of the GM tube bias supply, in volts. */
+/**
+ * Typical healthy-tube bias as reported by the TubeVoltage measurement.
+ *
+ * The software-controlled range is wider; see {@link TUBE_VOLTAGE_CONTROL_RANGE}.
+ */
 export const TUBE_VOLTAGE_RANGE = { min: 450, max: 600 } as const;
+
+/**
+ * G-M tube bias the host may set, in volts.
+ *
+ * Matches SPARKvue's Geiger control panel (180–697 V in 8 V steps, default
+ * 500 V). The product page quotes 150–650 V; Capstone/SPARKvue use this slightly
+ * wider window. Sending the same value for both payload voltages is "manual"
+ * mode; `(0, 0)` is SPARKvue's "automatic" optimum (not used by this sim).
+ */
+export const TUBE_VOLTAGE_CONTROL_RANGE = { min: 180, max: 697, step: 8, default: 500 } as const;
 
 /** One decoded sample from the Geiger counter's sensor. */
 export type GeigerSample = {
@@ -153,6 +186,49 @@ export function toCommandBuffer(bytes: readonly number[]): ArrayBuffer {
  */
 export function readOneSampleCommand(payloadBytes: number): ArrayBuffer {
   return toCommandBuffer([COMMAND.READ_ONE_SAMPLE, payloadBytes]);
+}
+
+/**
+ * Builds the command that enables or silences the audible count beep.
+ *
+ * @param enabled - true to allow beeps; false to suppress them
+ */
+export function enableBeeperCommand(enabled: boolean): ArrayBuffer {
+  return toCommandBuffer([COMMAND.CUSTOM, GEIGER_CONTROL.ENABLE_BEEPER, enabled ? 1 : 0]);
+}
+
+/**
+ * Builds the command that sets the G-M tube bias.
+ *
+ * SPARKvue's manual mode sends the same voltage for both arguments; ramp mode
+ * sends distinct initial and final values. Voltages are truncated to unsigned
+ * 16-bit little-endian, matching `PascoBLEDriver::GMSetVoltage`.
+ *
+ * @param initialVolts - bias in volts (or ramp start)
+ * @param finalVolts - bias in volts (or ramp end); omit to set a fixed bias
+ */
+export function setTubeVoltageCommand(initialVolts: number, finalVolts: number = initialVolts): ArrayBuffer {
+  const initial = clampUint16(Math.trunc(initialVolts));
+  const final = clampUint16(Math.trunc(finalVolts));
+  return toCommandBuffer([
+    COMMAND.CUSTOM,
+    GEIGER_CONTROL.SET_VOLTAGE,
+    initial & 0xff,
+    (initial >> 8) & 0xff,
+    final & 0xff,
+    (final >> 8) & 0xff,
+  ]);
+}
+
+/** Clamps a number into the unsigned 16-bit range used on the wire. */
+function clampUint16(value: number): number {
+  if (!Number.isFinite(value) || value < 0) {
+    return 0;
+  }
+  if (value > 0xffff) {
+    return 0xffff;
+  }
+  return value;
 }
 
 /**
