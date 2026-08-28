@@ -6,6 +6,7 @@
  * the counting logic rather than floating-point accumulation.
  */
 
+import { Range } from "scenerystack/dot";
 import { beforeEach, describe, expect, it } from "vitest";
 import { CountSourceType } from "../../../src/common/model/CountSource.js";
 import { RadioactivityModel } from "../../../src/common/model/RadioactivityModel.js";
@@ -253,6 +254,71 @@ describe("RadioactivityModel", () => {
     expect(model.isContinuousProperty.value).toBe(false);
     expect(model.simulatedSource.activityProperty.value).toBe(20);
     expect(model.sourceTypeProperty.value).toBe(CountSourceType.SIMULATED);
+  });
+});
+
+describe("RadioactivityModel counting-interval configuration", () => {
+  it("defaults to the standard 0.5-20 s range", () => {
+    const model = new RadioactivityModel();
+    expect(model.countingIntervalRange.min).toBe(0.5);
+    expect(model.countingIntervalRange.max).toBe(20);
+  });
+
+  it("accepts a narrower or wider range from options, e.g. the Simulation screen's 0.25 s floor", () => {
+    const model = new RadioactivityModel({ countingIntervalRange: new Range(0.25, 20) });
+    expect(model.countingIntervalRange.min).toBe(0.25);
+    model.countingIntervalProperty.value = 0.25;
+    expect(model.countingIntervalProperty.value).toBe(0.25);
+  });
+});
+
+describe("RadioactivityModel speed multiplier", () => {
+  let model: RadioactivityModel;
+
+  beforeEach(() => {
+    model = new RadioactivityModel();
+    model.countingIntervalProperty.value = 1;
+    model.isContinuousProperty.value = true;
+  });
+
+  it("defaults to real time", () => {
+    expect(model.speedMultiplierProperty.value).toBe(1);
+  });
+
+  it("runs the counting clock faster than real time when increased", () => {
+    model.startRecording();
+    advance(model, 1); // 1 real second at 1x -> 1 sample.
+    expect(model.samplesProperty.value).toHaveLength(1);
+
+    model.speedMultiplierProperty.value = 10;
+    advance(model, 1); // 1 more real second at 10x -> 10 more samples.
+    expect(model.samplesProperty.value).toHaveLength(11);
+  });
+
+  it("resets to real time", () => {
+    model.speedMultiplierProperty.value = 100;
+    model.reset();
+    expect(model.speedMultiplierProperty.value).toBe(1);
+  });
+
+  it("gives every interval completed within one frame its own independent count, instead of dumping the frame's total into the first and leaving the rest at zero", () => {
+    // A mean this high makes a true zero-count interval astronomically
+    // unlikely, so any zero exposes intervals sharing a stale, already-spent
+    // count rather than each drawing its own.
+    model.simulatedSource.activityProperty.value = 1000;
+    model.countingIntervalProperty.value = 0.25;
+    model.speedMultiplierProperty.value = 100;
+    model.startRecording();
+
+    // One real 60 fps frame's worth of simulated time (100x * 1/60 s ≈ 1.67 s)
+    // spans about 6-7 counting intervals, well past the first.
+    model.step(1 / 60);
+
+    const counts = model.samplesProperty.value.map((sample) => sample.counts);
+    expect(counts.length).toBeGreaterThan(1);
+    for (const count of counts) {
+      expect(count).toBeGreaterThan(0);
+    }
   });
 });
 

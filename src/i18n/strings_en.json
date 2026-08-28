@@ -17,7 +17,11 @@
     "unsupportedBrowser": "This browser cannot reach Bluetooth devices. Use Chrome or Edge.",
     "insecureContext": "Bluetooth needs a secure (HTTPS) page.",
     "tubeVoltage": "Tube voltage",
-    "rawRegister": "Raw register"
+    "rawRegister": "Raw register",
+    "speedLabel": "Simulation speed",
+    "speed1x": "1×",
+    "speed10x": "10×",
+    "speed100x": "100×"
   },
   "acquisition": {
     "title": "Measurement",
@@ -81,7 +85,7 @@
     "simulation": {
       "screenSummary": {
         "playArea": "The play area shows a histogram or a count-rate chart of a simulated counting source, alongside a panel of summary statistics.",
-        "controlArea": "The control area lets you set the simulated source's activity, choose which chart is shown, set the counting interval and run length, start and stop recording, choose which theoretical curves to show, set the histogram bin width, export the data, and reset the simulation.",
+        "controlArea": "The control area lets you set the simulated source's activity, choose a simulation speed, choose which chart is shown, set the counting interval and run length, start and stop recording, choose which theoretical curves to show, set the histogram bin width, export the data, and reset the simulation.",
         "interactionHint": "Collect a run of measurements, then switch between the histogram and the count-rate chart to see what the data shows."
       },
       "currentDetails": "No measurements have been collected yet.",
@@ -99,6 +103,7 @@
         "clearButton": "Clear the collected measurements",
         "exportButton": "Export the collected measurements as a CSV file",
         "chartViewRadioGroup": "Choose whether to show the histogram or the count rate over time",
+        "speedRadioGroup": "Choose how much faster than real time the simulation runs",
         "poissonCheckbox": "Show the Poisson prediction",
         "gaussianPredictionCheckbox": "Show the Gaussian prediction with sigma equal to the square root of the mean",
         "gaussianFitCheckbox": "Show the best-fit Gaussian",
@@ -127,6 +132,7 @@
         "clearButton": "Clear the collected measurements",
         "exportButton": "Export the collected measurements as a CSV file",
         "chartViewRadioGroup": "Choose whether to show the histogram or the count rate over time",
+        "speedRadioGroup": "Choose how much faster than real time the simulation runs",
         "poissonCheckbox": "Show the Poisson prediction",
         "gaussianPredictionCheckbox": "Show the Gaussian prediction with sigma equal to the square root of the mean",
         "gaussianFitCheckbox": "Show the best-fit Gaussian",

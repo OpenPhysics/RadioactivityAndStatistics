@@ -17,7 +17,11 @@
     "unsupportedBrowser": "Ce navigateur ne peut pas accéder aux appareils Bluetooth. Utilisez Chrome ou Edge.",
     "insecureContext": "Le Bluetooth exige une page sécurisée (HTTPS).",
     "tubeVoltage": "Tension du tube",
-    "rawRegister": "Registre brut"
+    "rawRegister": "Registre brut",
+    "speedLabel": "Vitesse de la simulation",
+    "speed1x": "1×",
+    "speed10x": "10×",
+    "speed100x": "100×"
   },
   "acquisition": {
     "title": "Mesure",
@@ -81,7 +85,7 @@
     "simulation": {
       "screenSummary": {
         "playArea": "La zone de jeu affiche un histogramme ou un graphique du taux de comptage d'une source de comptage simulée, à côté d'un panneau de statistiques.",
-        "controlArea": "La zone de contrôle permet de régler l'activité de la source simulée, de choisir le graphique affiché, de régler l'intervalle de comptage et la longueur de la série, de démarrer et d'arrêter l'enregistrement, de choisir les courbes théoriques affichées, de régler la largeur de classe, d'exporter les données et de réinitialiser la simulation.",
+        "controlArea": "La zone de contrôle permet de régler l'activité de la source simulée, de choisir la vitesse de la simulation, de choisir le graphique affiché, de régler l'intervalle de comptage et la longueur de la série, de démarrer et d'arrêter l'enregistrement, de choisir les courbes théoriques affichées, de régler la largeur de classe, d'exporter les données et de réinitialiser la simulation.",
         "interactionHint": "Recueillez une série de mesures, puis basculez entre l'histogramme et le graphique du taux de comptage pour voir ce que les données montrent."
       },
       "currentDetails": "Aucune mesure n'a encore été recueillie.",
@@ -99,6 +103,7 @@
         "clearButton": "Effacer les mesures recueillies",
         "exportButton": "Exporter les mesures recueillies en fichier CSV",
         "chartViewRadioGroup": "Choisir d'afficher l'histogramme ou le taux de comptage dans le temps",
+        "speedRadioGroup": "Choisir à quelle vitesse, par rapport au temps réel, la simulation s'exécute",
         "poissonCheckbox": "Afficher la prédiction de Poisson",
         "gaussianPredictionCheckbox": "Afficher la prédiction gaussienne avec sigma égal à la racine carrée de la moyenne",
         "gaussianFitCheckbox": "Afficher la gaussienne ajustée",
@@ -127,6 +132,7 @@
         "clearButton": "Effacer les mesures recueillies",
         "exportButton": "Exporter les mesures recueillies en fichier CSV",
         "chartViewRadioGroup": "Choisir d'afficher l'histogramme ou le taux de comptage dans le temps",
+        "speedRadioGroup": "Choisir à quelle vitesse, par rapport au temps réel, la simulation s'exécute",
         "poissonCheckbox": "Afficher la prédiction de Poisson",
         "gaussianPredictionCheckbox": "Afficher la prédiction gaussienne avec sigma égal à la racine carrée de la moyenne",
         "gaussianFitCheckbox": "Afficher la gaussienne ajustée",

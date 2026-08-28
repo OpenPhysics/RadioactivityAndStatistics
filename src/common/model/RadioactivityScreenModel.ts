@@ -9,6 +9,7 @@
  */
 
 import { BooleanProperty, Property } from "scenerystack/axon";
+import type { Range } from "scenerystack/dot";
 import type { TModel } from "scenerystack/joist";
 import type { RadioactivityAndStatisticsPreferencesModel } from "../../preferences/RadioactivityAndStatisticsPreferencesModel.js";
 import type { ChartViewTypeValue } from "./ChartViewType.js";
@@ -21,6 +22,15 @@ export type RadioactivityScreenModelOptions = {
 
   /** Which chart the screen opens on. */
   readonly initialChartView: ChartViewTypeValue;
+
+  /** Passed through to {@link RadioactivityModel}'s counting-interval range. */
+  readonly countingIntervalRange?: Range;
+
+  /** Passed through to {@link RadioactivityModel}'s counting-interval arrow-button step. */
+  readonly countingIntervalDelta?: number;
+
+  /** Passed through to {@link RadioactivityModel}'s counting-interval decimal places. */
+  readonly countingIntervalDecimalPlaces?: number;
 };
 
 export class RadioactivityScreenModel implements TModel {
@@ -59,6 +69,11 @@ export class RadioactivityScreenModel implements TModel {
         beepEnabledProperty: preferences.beepEnabledProperty,
         tubeVoltageProperty: preferences.tubeVoltageProperty,
       },
+      ...(options.countingIntervalRange !== undefined && { countingIntervalRange: options.countingIntervalRange }),
+      ...(options.countingIntervalDelta !== undefined && { countingIntervalDelta: options.countingIntervalDelta }),
+      ...(options.countingIntervalDecimalPlaces !== undefined && {
+        countingIntervalDecimalPlaces: options.countingIntervalDecimalPlaces,
+      }),
     });
     this.chartViewProperty = new Property<ChartViewTypeValue>(options.initialChartView);
   }

@@ -24,13 +24,17 @@ import type { TModel } from "scenerystack/joist";
 import {
   ACTIVITY_RANGE,
   BIN_WIDTH_RANGE,
+  COUNTING_INTERVAL_DECIMAL_PLACES,
+  COUNTING_INTERVAL_DELTA,
   COUNTING_INTERVAL_RANGE,
   DEFAULT_ACTIVITY,
   DEFAULT_COUNTING_INTERVAL,
   DEFAULT_SAMPLES_PER_RUN,
+  DEFAULT_SPEED_MULTIPLIER,
   MAXIMUM_INTERVALS_PER_FRAME,
   MAXIMUM_STEP_DT,
   SAMPLES_PER_RUN_RANGE,
+  SPEED_MULTIPLIER_CHOICES,
 } from "../../RadioactivityAndStatisticsConstants.js";
 import type { CountSample } from "./CountSample.js";
 import { CountSourceType, type CountSourceTypeValue, type TCountSource } from "./CountSource.js";
@@ -52,6 +56,15 @@ export type RadioactivityModelOptions = {
    * {@link CountSourceType.SIMULATED}.
    */
   readonly fixedSourceType?: CountSourceTypeValue;
+
+  /** Range offered for {@link RadioactivityModel.countingIntervalProperty}. Defaults to {@link COUNTING_INTERVAL_RANGE}. */
+  readonly countingIntervalRange?: Range;
+
+  /** Arrow-button step for the counting interval control. Defaults to {@link COUNTING_INTERVAL_DELTA}. */
+  readonly countingIntervalDelta?: number;
+
+  /** Decimal places shown for the counting interval control. Defaults to {@link COUNTING_INTERVAL_DECIMAL_PLACES}. */
+  readonly countingIntervalDecimalPlaces?: number;
 };
 
 export class RadioactivityModel implements TModel {
@@ -73,6 +86,22 @@ export class RadioactivityModel implements TModel {
 
   /** Length of one counting interval, in seconds. */
   public readonly countingIntervalProperty: NumberProperty;
+
+  /** Range offered for {@link countingIntervalProperty}, for the view control. */
+  public readonly countingIntervalRange: Range;
+
+  /** Arrow-button step for the counting interval control. */
+  public readonly countingIntervalDelta: number;
+
+  /** Decimal places shown for the counting interval control. */
+  public readonly countingIntervalDecimalPlaces: number;
+
+  /**
+   * How many simulated seconds pass per real second. A control on the
+   * Simulation screen alone ever changes this away from 1 — a real source's
+   * decays cannot be sped up, so the Device screen leaves it at real time.
+   */
+  public readonly speedMultiplierProperty: Property<number>;
 
   /** How many intervals a run collects before recording stops on its own. */
   public readonly samplesPerRunProperty: NumberProperty;
@@ -148,9 +177,15 @@ export class RadioactivityModel implements TModel {
         sourceType === CountSourceType.GEIGER_COUNTER ? this.geigerSource : this.simulatedSource,
     );
 
+    this.countingIntervalRange = options?.countingIntervalRange ?? COUNTING_INTERVAL_RANGE;
+    this.countingIntervalDelta = options?.countingIntervalDelta ?? COUNTING_INTERVAL_DELTA;
+    this.countingIntervalDecimalPlaces = options?.countingIntervalDecimalPlaces ?? COUNTING_INTERVAL_DECIMAL_PLACES;
     this.countingIntervalProperty = new NumberProperty(DEFAULT_COUNTING_INTERVAL, {
-      range: COUNTING_INTERVAL_RANGE,
+      range: this.countingIntervalRange,
       units: "s",
+    });
+    this.speedMultiplierProperty = new Property<number>(DEFAULT_SPEED_MULTIPLIER, {
+      validValues: SPEED_MULTIPLIER_CHOICES,
     });
     this.samplesPerRunProperty = new NumberProperty(DEFAULT_SAMPLES_PER_RUN, { range: SAMPLES_PER_RUN_RANGE });
     this.isContinuousProperty = new BooleanProperty(false);
@@ -258,21 +293,42 @@ export class RadioactivityModel implements TModel {
       return;
     }
 
+    // The speed multiplier scales simulated time after the backgrounded-tab
+    // guard above, not before it — so a real wall-clock stall is still capped
+    // by MAXIMUM_STEP_DT, while a deliberate 10x or 100x speedup is not.
+    let remainingDt = clampedDt * this.speedMultiplierProperty.value;
+
     const source = this.activeSourceProperty.value;
-    source.step(clampedDt);
-
-    this.intervalElapsedProperty.value += clampedDt;
-    this.intervalCountsProperty.value = source.totalCountsProperty.value - this.intervalStartTotal;
-
-    if (this.isRecordingProperty.value) {
-      this.runTimeProperty.value += clampedDt;
-    }
-
     const interval = this.countingIntervalProperty.value;
     let completed = 0;
-    while (this.intervalElapsedProperty.value >= interval && completed < MAXIMUM_INTERVALS_PER_FRAME) {
-      this.completeInterval(interval);
-      completed += 1;
+
+    // A simulated count is one Poisson draw for whatever dt it is given. Once
+    // a speed multiplier or a short interval lets one frame span more than
+    // one counting interval, the source must be stepped once per interval
+    // boundary rather than once for the whole frame — otherwise every
+    // interval after the first in that frame would close over a count that
+    // was already spent (and reset to zero) by the one before it.
+    while (remainingDt > 0) {
+      const timeToIntervalEnd =
+        completed < MAXIMUM_INTERVALS_PER_FRAME
+          ? Math.max(interval - this.intervalElapsedProperty.value, 0)
+          : remainingDt;
+      const stepDt = Math.min(remainingDt, timeToIntervalEnd);
+
+      source.step(stepDt);
+      this.intervalElapsedProperty.value += stepDt;
+      this.intervalCountsProperty.value = source.totalCountsProperty.value - this.intervalStartTotal;
+
+      if (this.isRecordingProperty.value) {
+        this.runTimeProperty.value += stepDt;
+      }
+
+      remainingDt -= stepDt;
+
+      if (completed < MAXIMUM_INTERVALS_PER_FRAME && this.intervalElapsedProperty.value >= interval) {
+        this.completeInterval(interval);
+        completed += 1;
+      }
     }
   }
 
@@ -281,6 +337,7 @@ export class RadioactivityModel implements TModel {
     this.samplesProperty.value = [];
     this.sourceTypeProperty.reset();
     this.countingIntervalProperty.reset();
+    this.speedMultiplierProperty.reset();
     this.samplesPerRunProperty.reset();
     this.isContinuousProperty.reset();
     this.isAutoBinWidthProperty.reset();
