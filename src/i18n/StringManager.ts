@@ -65,6 +65,7 @@ export type ScreenControlA11yStrings = {
   readonly clearButtonStringProperty: ReadOnlyProperty<string>;
   readonly exportButtonStringProperty: ReadOnlyProperty<string>;
   readonly chartViewRadioGroupStringProperty: ReadOnlyProperty<string>;
+  readonly speedRadioGroupStringProperty: ReadOnlyProperty<string>;
   readonly poissonCheckboxStringProperty: ReadOnlyProperty<string>;
   readonly gaussianPredictionCheckboxStringProperty: ReadOnlyProperty<string>;
   readonly gaussianFitCheckboxStringProperty: ReadOnlyProperty<string>;

@@ -77,8 +77,36 @@ export const TABLE_WIDTH = 230;
 /** Counting interval in seconds: how long each measurement accumulates. */
 export const COUNTING_INTERVAL_RANGE = new Range(0.5, 20);
 
+/** Arrow-button step for the counting interval. */
+export const COUNTING_INTERVAL_DELTA = 0.5;
+
+/** Decimal places shown for the counting interval. */
+export const COUNTING_INTERVAL_DECIMAL_PLACES = 1;
+
+/**
+ * Counting interval range on the Simulation screen, whose fastest rate is not
+ * limited by any hardware polling rate the way a real Geiger counter is.
+ */
+export const SIMULATION_COUNTING_INTERVAL_RANGE = new Range(0.25, 20);
+
+/** Arrow-button step for the counting interval on the Simulation screen. */
+export const SIMULATION_COUNTING_INTERVAL_DELTA = 0.25;
+
+/** Decimal places shown for the counting interval on the Simulation screen. */
+export const SIMULATION_COUNTING_INTERVAL_DECIMAL_PLACES = 2;
+
 /** Default counting interval, in seconds. */
 export const DEFAULT_COUNTING_INTERVAL = 1;
+
+/**
+ * Selectable factors by which the Simulation screen's clock can run faster
+ * than real time. Offered only on the Simulation screen — a real source's
+ * decays cannot be sped up, so the Device screen leaves this at 1.
+ */
+export const SPEED_MULTIPLIER_CHOICES = [1, 10, 100];
+
+/** Default speed multiplier: real time. */
+export const DEFAULT_SPEED_MULTIPLIER = 1;
 
 /** How many intervals a run collects before recording stops on its own. */
 export const SAMPLES_PER_RUN_RANGE = new Range(5, 200);
@@ -111,8 +139,15 @@ export const BIN_WIDTH_RANGE = new Range(1, 20);
  */
 export const MAXIMUM_STEP_DT = 0.5;
 
-/** Cap on intervals completed in a single frame, as a runaway-loop guard. */
-export const MAXIMUM_INTERVALS_PER_FRAME = 5;
+/**
+ * Cap on intervals completed in a single frame, as a runaway-loop guard.
+ *
+ * Sized to keep up with the fastest speed multiplier (100×) at the shortest
+ * counting interval (0.25 s): a 60 fps frame then needs to complete up to
+ * ~7 intervals to avoid throttling the requested speedup. Any surplus beyond
+ * the cap is not lost — the remainder carries into the next frame.
+ */
+export const MAXIMUM_INTERVALS_PER_FRAME = 20;
 
 RadioactivityAndStatisticsNamespace.register("RadioactivityAndStatisticsConstants", {
   SCREEN_VIEW_MARGIN,
@@ -128,7 +163,14 @@ RadioactivityAndStatisticsNamespace.register("RadioactivityAndStatisticsConstant
   TABLE_ROW_HEIGHT,
   TABLE_WIDTH,
   COUNTING_INTERVAL_RANGE,
+  COUNTING_INTERVAL_DELTA,
+  COUNTING_INTERVAL_DECIMAL_PLACES,
+  SIMULATION_COUNTING_INTERVAL_RANGE,
+  SIMULATION_COUNTING_INTERVAL_DELTA,
+  SIMULATION_COUNTING_INTERVAL_DECIMAL_PLACES,
   DEFAULT_COUNTING_INTERVAL,
+  SPEED_MULTIPLIER_CHOICES,
+  DEFAULT_SPEED_MULTIPLIER,
   SAMPLES_PER_RUN_RANGE,
   DEFAULT_SAMPLES_PER_RUN,
   ACTIVITY_RANGE,

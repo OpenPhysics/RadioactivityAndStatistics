@@ -16,11 +16,11 @@ import { DerivedProperty, type TReadOnlyProperty } from "scenerystack/axon";
 import { toFixed } from "scenerystack/dot";
 import { Circle, HBox, type Node, Text, VBox } from "scenerystack/scenery";
 import { NumberControl, PhetFont } from "scenerystack/scenery-phet";
-import { RectangularPushButton } from "scenerystack/sun";
+import { AquaRadioButtonGroup, RectangularPushButton } from "scenerystack/sun";
 import type { ScreenControlA11yStrings } from "../../i18n/StringManager.js";
 import { StringManager } from "../../i18n/StringManager.js";
 import RadioactivityAndStatisticsColors from "../../RadioactivityAndStatisticsColors.js";
-import { CONTROL_PANEL_WIDTH } from "../../RadioactivityAndStatisticsConstants.js";
+import { CONTROL_PANEL_WIDTH, SPEED_MULTIPLIER_CHOICES } from "../../RadioactivityAndStatisticsConstants.js";
 import { getWebBluetoothStatus, WebBluetoothStatus } from "../hardware/webBluetoothSupport.js";
 import { ConnectionState } from "../model/ConnectionState.js";
 import { CountSourceType, type CountSourceTypeValue } from "../model/CountSource.js";
@@ -79,7 +79,22 @@ export class SourcePanel extends RadioactivityAndStatisticsPanel {
   }
 }
 
-/** Just the simulated activity slider. */
+/** The label for one entry of the speed radio group. */
+function speedLabelStringProperty(
+  multiplier: number,
+  strings: ReturnType<typeof StringManager.prototype.getSourceStrings>,
+): TReadOnlyProperty<string> {
+  switch (multiplier) {
+    case 10:
+      return strings.speed10xStringProperty;
+    case 100:
+      return strings.speed100xStringProperty;
+    default:
+      return strings.speed1xStringProperty;
+  }
+}
+
+/** The simulated activity slider and the speed control that fast-forwards its clock. */
 function createSimulatedControls(
   model: RadioactivityModel,
   strings: ReturnType<typeof StringManager.prototype.getSourceStrings>,
@@ -105,10 +120,34 @@ function createSimulatedControls(
     },
   );
 
+  const speedLabelText = new Text(strings.speedLabelStringProperty, {
+    font: new PhetFont(13),
+    fill: RadioactivityAndStatisticsColors.textColorProperty,
+    maxWidth: CONTROL_PANEL_WIDTH - 40,
+  });
+
+  const speedRadioGroup = new AquaRadioButtonGroup(
+    model.speedMultiplierProperty,
+    SPEED_MULTIPLIER_CHOICES.map((multiplier) => ({
+      value: multiplier,
+      createNode: () =>
+        new Text(speedLabelStringProperty(multiplier, strings), {
+          font: new PhetFont(13),
+          fill: RadioactivityAndStatisticsColors.textColorProperty,
+        }),
+    })),
+    {
+      orientation: "horizontal",
+      spacing: 10,
+      radioButtonOptions: { radius: 7 },
+      accessibleName: a11y.speedRadioGroupStringProperty,
+    },
+  );
+
   return new VBox({
     align: "left",
     spacing: 6,
-    children: [activityControl],
+    children: [activityControl, speedLabelText, speedRadioGroup],
   });
 }
 

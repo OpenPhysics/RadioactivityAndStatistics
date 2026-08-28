@@ -16,11 +16,7 @@ import { Checkbox, RectangularPushButton } from "scenerystack/sun";
 import type { ScreenControlA11yStrings } from "../../i18n/StringManager.js";
 import { StringManager } from "../../i18n/StringManager.js";
 import RadioactivityAndStatisticsColors from "../../RadioactivityAndStatisticsColors.js";
-import {
-  CONTROL_PANEL_WIDTH,
-  COUNTING_INTERVAL_RANGE,
-  SAMPLES_PER_RUN_RANGE,
-} from "../../RadioactivityAndStatisticsConstants.js";
+import { CONTROL_PANEL_WIDTH, SAMPLES_PER_RUN_RANGE } from "../../RadioactivityAndStatisticsConstants.js";
 import { createExportFilename, samplesToCsv } from "../model/csvExport.js";
 import type { RadioactivityModel } from "../model/RadioactivityModel.js";
 import { FLAT_PANEL_PUSH_BUTTON_OPTIONS, LIGHT_SURFACE_TEXT_FILL } from "../RadioactivityAndStatisticsButtonOptions.js";
@@ -51,14 +47,14 @@ export class AcquisitionPanel extends RadioactivityAndStatisticsPanel {
     const intervalControl = new NumberControl(
       strings.intervalStringProperty,
       model.countingIntervalProperty,
-      COUNTING_INTERVAL_RANGE,
+      model.countingIntervalRange,
       {
         ...SIM_NUMBER_CONTROL_OPTIONS,
-        delta: 0.5,
+        delta: model.countingIntervalDelta,
         titleNodeOptions,
         numberDisplayOptions: {
           valuePattern: "{{value}} s",
-          decimalPlaces: 1,
+          decimalPlaces: model.countingIntervalDecimalPlaces,
           textOptions: { font: new PhetFont(13) },
         },
         accessibleName: a11y.intervalControlStringProperty,

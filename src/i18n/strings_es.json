@@ -17,7 +17,11 @@
     "unsupportedBrowser": "Este navegador no puede acceder a dispositivos Bluetooth. Use Chrome o Edge.",
     "insecureContext": "El Bluetooth requiere una página segura (HTTPS).",
     "tubeVoltage": "Voltaje del tubo",
-    "rawRegister": "Registro sin procesar"
+    "rawRegister": "Registro sin procesar",
+    "speedLabel": "Velocidad de la simulación",
+    "speed1x": "1×",
+    "speed10x": "10×",
+    "speed100x": "100×"
   },
   "acquisition": {
     "title": "Medición",
@@ -81,7 +85,7 @@
     "simulation": {
       "screenSummary": {
         "playArea": "El área de juego muestra un histograma o un gráfico de la tasa de conteo de una fuente de conteo simulada, junto a un panel de estadísticas.",
-        "controlArea": "El área de control permite ajustar la actividad de la fuente simulada, elegir qué gráfico se muestra, fijar el intervalo de conteo y la longitud de la serie, iniciar y detener la grabación, elegir qué curvas teóricas mostrar, fijar el ancho de clase, exportar los datos y reiniciar la simulación.",
+        "controlArea": "El área de control permite ajustar la actividad de la fuente simulada, elegir la velocidad de la simulación, elegir qué gráfico se muestra, fijar el intervalo de conteo y la longitud de la serie, iniciar y detener la grabación, elegir qué curvas teóricas mostrar, fijar el ancho de clase, exportar los datos y reiniciar la simulación.",
         "interactionHint": "Recoja una serie de mediciones y luego alterne entre el histograma y el gráfico de la tasa de conteo para ver lo que muestran los datos."
       },
       "currentDetails": "Todavía no se ha recogido ninguna medición.",
@@ -99,6 +103,7 @@
         "clearButton": "Borrar las mediciones recogidas",
         "exportButton": "Exportar las mediciones recogidas como archivo CSV",
         "chartViewRadioGroup": "Elegir si se muestra el histograma o la tasa de conteo en el tiempo",
+        "speedRadioGroup": "Elegir cuánto más rápido que el tiempo real se ejecuta la simulación",
         "poissonCheckbox": "Mostrar la predicción de Poisson",
         "gaussianPredictionCheckbox": "Mostrar la predicción gaussiana con sigma igual a la raíz cuadrada de la media",
         "gaussianFitCheckbox": "Mostrar la gaussiana de mejor ajuste",
@@ -127,6 +132,7 @@
         "clearButton": "Borrar las mediciones recogidas",
         "exportButton": "Exportar las mediciones recogidas como archivo CSV",
         "chartViewRadioGroup": "Elegir si se muestra el histograma o la tasa de conteo en el tiempo",
+        "speedRadioGroup": "Elegir cuánto más rápido que el tiempo real se ejecuta la simulación",
         "poissonCheckbox": "Mostrar la predicción de Poisson",
         "gaussianPredictionCheckbox": "Mostrar la predicción gaussiana con sigma igual a la raíz cuadrada de la media",
         "gaussianFitCheckbox": "Mostrar la gaussiana de mejor ajuste",
