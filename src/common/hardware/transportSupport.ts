@@ -5,7 +5,7 @@
  * sim can explain exactly why a wire is unavailable instead of failing at the
  * first click.
  *
- * Web Bluetooth and WebHID are both exposed only to a secure context (HTTPS or
+ * Web Bluetooth and WebUSB are both exposed only to a secure context (HTTPS or
  * localhost) and only in Chromium-based browsers. The sim stays fully usable
  * without either — the simulated source is always available — so nothing here
  * throws.
@@ -32,7 +32,7 @@ const cachedStatus = new Map<TransportKindValue, TransportStatusValue>();
 
 /** Whether the browser object backing a transport exists. */
 function hasApi(kind: TransportKindValue): boolean {
-  return kind === TransportKind.USB ? navigator.hid !== undefined : navigator.bluetooth !== undefined;
+  return kind === TransportKind.USB ? navigator.usb !== undefined : navigator.bluetooth !== undefined;
 }
 
 /** Determines whether this page can talk to hardware over one wire. */

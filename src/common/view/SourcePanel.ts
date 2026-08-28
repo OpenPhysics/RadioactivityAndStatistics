@@ -21,6 +21,7 @@ import { NumberControl, PhetFont } from "scenerystack/scenery-phet";
 import { AquaRadioButtonGroup, RectangularPushButton } from "scenerystack/sun";
 import type { ScreenControlA11yStrings } from "../../i18n/StringManager.js";
 import { StringManager } from "../../i18n/StringManager.js";
+import radioactivityAndStatisticsQueryParameters from "../../preferences/radioactivityAndStatisticsQueryParameters.js";
 import RadioactivityAndStatisticsColors from "../../RadioactivityAndStatisticsColors.js";
 import { CONTROL_PANEL_WIDTH, SPEED_MULTIPLIER_CHOICES } from "../../RadioactivityAndStatisticsConstants.js";
 import { TransportKind, type TransportKindValue } from "../hardware/GeigerTransport.js";
@@ -240,9 +241,14 @@ function createGeigerControls(
   // One button per wire the browser can actually use. A wire the browser does
   // not implement is left out rather than shown disabled: an absent button
   // cannot be clicked in hope, and the message below says what is missing.
-  const connectButtons = getAvailableTransports().map((transport) =>
-    createConnectButton(geigerSource, transport, strings, a11y, isDisconnectedProperty),
-  );
+  //
+  // USB is additionally gated behind ?usbTransport=true. The counter's bridge
+  // interface can be reached and claimed, but its data path stays in loopback,
+  // so the button cannot yet succeed for anyone — see the transport's header
+  // comment. Better no button than one that always fails.
+  const connectButtons = getAvailableTransports()
+    .filter((transport) => transport !== TransportKind.USB || radioactivityAndStatisticsQueryParameters.usbTransport)
+    .map((transport) => createConnectButton(geigerSource, transport, strings, a11y, isDisconnectedProperty));
 
   const disconnectButton = new RectangularPushButton({
     ...FLAT_PANEL_PUSH_BUTTON_OPTIONS,

@@ -15,19 +15,37 @@
 <body>
 <h1>PASCO Geiger counter — USB transport probe</h1>
 <p>Plug the counter in over USB, power it on, then try each picker. The picker
-lists <em>all</em> devices of that kind; look for the PASCO / Geiger entry.</p>
+lists <em>all</em> devices of that kind; look for the PASCO / Geiger entry. Once
+permission is granted the device is adopted automatically on load — just
+reload, then press <em>Probe every write path</em>.</p>
 <div class="support" id="support"></div>
 <p>
-  <button type="button" id="hid">1. HID picker</button>
-  <button type="button" id="serial">2. Serial picker</button>
-  <button type="button" id="usb">3. WebUSB picker</button>
+  <button type="button" id="hid-pasco"><b>1. HID picker — PASCO only</b></button>
+  <button type="button" id="usb-pasco"><b>2. WebUSB picker — PASCO only</b></button>
+  <br>
+  <button type="button" id="hid">HID picker (all devices)</button>
+  <button type="button" id="serial">Serial picker</button>
+  <button type="button" id="usb">WebUSB picker (all devices)</button>
   <button type="button" id="known">List already-permitted</button>
   <button type="button" id="clear">Clear log</button>
 </p>
 <p>
-  <button type="button" id="listen" disabled>Open + listen (HID)</button>
-  <button type="button" id="read" disabled>Send READ_ONE_SAMPLE [05 04]</button>
-  <button type="button" id="keepalive" disabled>Send KEEPALIVE [00]</button>
+  <button type="button" id="usb-claim"><b>3. WebUSB: open + claim + listen</b></button>
+  <button type="button" id="usb-read" disabled>4. Send READ_ONE_SAMPLE [05 04]</button>
+  <button type="button" id="usb-keepalive" disabled>Send KEEPALIVE [00]</button>
+</p>
+<p>
+  <label>bulk OUT hex: <input id="usb-hex" value="05 04" size="40"></label>
+  <button type="button" id="usb-send-hex">Send as-is</button>
+  <button type="button" id="usb-send-padded">Send padded to 64B</button>
+  <button type="button" id="hid-stop">Stop HID listening</button>
+</p>
+<p>
+  <button type="button" id="usb-control-in"><b>5. Control-transfer probe (read-only)</b></button>
+  <button type="button" id="usb-control-out"><b>6. Vendor control OUT sweep (WRITES to firmware)</b></button>
+  <br>
+  <button type="button" id="write" disabled>Probe every HID write path</button>
+  <button type="button" id="stats" disabled>Stream stats</button>
 </p>
 <pre id="log"></pre>
 <script type="module" src="./usb-probe.js"></script>

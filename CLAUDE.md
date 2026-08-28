@@ -28,7 +28,7 @@ changing the acquisition or hardware layers.
 | `src/common/hardware/GeigerTransport.ts` | The `TGeigerTransport` contract: opaque PASCO packets over one wire. The reason Bluetooth and USB share every layer above the wire |
 | `src/common/hardware/GeigerCounterDevice.ts` | The counter itself, independent of wire: commands, response matching, read timeout |
 | `src/common/hardware/BluetoothGeigerTransport.ts` | The **only** file touching `navigator.bluetooth` |
-| `src/common/hardware/UsbGeigerTransport.ts` | The **only** file touching `navigator.hid` |
+| `src/common/hardware/UsbGeigerTransport.ts` | The **only** file touching `navigator.usb`. Reaches the counter but its data path is still closed — see below |
 | `src/common/hardware/transportSupport.ts` | Per-wire feature detection, so the panel can say which wire is missing and why |
 | `src/common/model/Statistics.ts` | Welford statistics, log-gamma, Poisson and Gaussian distributions |
 | `src/common/model/Histogram.ts` | Integer binning, bin-width choice, per-bin expected frequencies |
@@ -42,7 +42,7 @@ changing the acquisition or hardware layers.
 ## Things that will bite
 
 **Every device picker needs the user gesture.** Web Bluetooth's `requestDevice`
-and WebHID's both open their picker only during a real user gesture, and a
+and WebUSB's both open their picker only during a real user gesture, and a
 gesture does not survive an `await`. `GeigerCountSource.connect()` →
 `GeigerCounterDevice.connect()` → the transport runs synchronously up to that
 call. Do not put an `await` before it in a button listener, and do not wrap the
@@ -79,6 +79,16 @@ power-on. Do not "optimise" it to skip readings equal to their predecessor — a
 10 Hz the register holds small integers, repeats are ordinary, and skipping them
 undercounts by roughly 15%.
 
+**The USB path is unfinished, and the button is off by default.** The counter's
+USB port presents a vendor-specific "Pasco USB Bridge" (0x0945:0x0002) that
+WebUSB can claim — but its bulk pipe echoes every packet back byte-identical,
+and nothing found by inspection opens it. It is **not** a HID device; a WebHID
+picker filtered to PASCO is empty. Framing variants, all 64 vendor control IN
+requests, and the descriptors have been ruled out — see
+[`doc/implementation-notes.md`](doc/implementation-notes.md) before spending any
+time here, and do not re-derive what is already eliminated. `?usbTransport=true`
+shows the button.
+
 ## Query parameters
 
 | Parameter | Effect |
@@ -87,6 +97,7 @@ undercounts by roughly 15%.
 | `?beepEnabled=false` | Silence the audible count beep on a connected Geiger counter |
 | `?tubeVoltage=500` | G-M tube bias setpoint in volts (Preferences slider; applied over the open link) |
 | `?debugTransport=true` | Byte-level tracing of both directions on either wire (`?debugBluetooth=true` still works) |
+| `?usbTransport=true` | Offer the "Connect via USB" button. Off by default: the USB data path is unsolved |
 
 Also surfaced in Preferences → Simulation.
 
@@ -99,9 +110,10 @@ headless environment — `tests/common/hardware/PascoProtocol.test.ts` covers th
 wire format, and everything above the transport is exercised through the
 simulated source.
 
-`scripts/probe/usb-probe.html` (served by `npm run dev`) is the bring-up tool for
-the USB path: it dumps what WebHID, Web Serial, and WebUSB each see, and will
-open the HID device and exchange raw PASCO packets with it.
+`scripts/probe/usb-probe.html` is the bring-up tool for the USB path, served by
+`node scripts/probe/probe-server.mjs`, which also collects its log to a file. It
+dumps what WebHID, Web Serial, and WebUSB each see, claims the bridge, sends
+arbitrary hex down the bulk pipe, and sweeps vendor control requests.
 
 To sanity-check a real device: connect, enable diagnostics, and watch the tube
 voltage. It should read 500 V. Zero there means no sample is being decoded, not
@@ -134,9 +146,9 @@ here. Dependabot ignores these three names (see `.github/dependabot.yml`).
 | `three` | `~0.125.2` | SceneryStack declares `^0.104.0`. Floor is 0.125.0 for GHSA-fq6p-x6j3-cmmq. **0.125.x still has open CVEs** (XSS GHSA-7vvq-7r29-5vg3, fixed only in ≥0.137.0). Remove if SceneryStack drops `three` or pins a patched line. |
 | `brace-expansion` | `~5.0.9` | Transitive via `vite-plugin-pwa` / Workbox. Clears npm audit (GHSA-mh99-v99m-4gvg; keep ≥5.0.9 for GHSA-rgw5-rvv9-x895). |
 
-`@types/web-bluetooth` and `@types/w3c-web-hid` are devDependencies and must stay
+`@types/web-bluetooth` and `@types/w3c-web-usb` are devDependencies and must stay
 in the `types` array of **both** `tsconfig.json` and `tsconfig.test.json` — the
-tests import `src` modules that reference the Web Bluetooth and WebHID globals.
+tests import `src` modules that reference the Web Bluetooth and WebUSB globals.
 
 ## PWA
 

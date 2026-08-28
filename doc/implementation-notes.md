@@ -204,31 +204,59 @@ connected. The beep checkbox likewise pushes immediately over BLE.
 ## The USB wire
 
 The counter's own USB port is not only a charging port: PASCO's manual has it
-connecting to a PC, Mac, Chromebook, or Android device for data, and SPARKvue's
-browser build talks to wired sensors, so a browser-reachable path exists.
+connecting to a PC, Mac, Chromebook, or Android device for data. What it
+actually presents, measured against a PS-3238 on 2026-08-28 — PASCO publish no
+protocol documentation, and neither open PASCO library touches USB at all:
 
-**WebHID, not WebUSB or Web Serial.** PASCO's USB devices enumerate as HID, so
-the host OS claims them with its own driver — and WebUSB cannot claim an
-interface an OS driver already owns, which rules it out on Windows and macOS.
-Web Serial only sees CDC-ACM ports, which this device does not expose. WebHID is
-left, and it wants no driver installation, which is presumably why SPARKvue's
-browser build uses it too.
+| | |
+|---|---|
+| Manufacturer / product | `Pasco` / `Pasco USB Bridge` |
+| Vendor / product id | 0x0945 (USB-IF registry) / 0x0002, no serial number |
+| Interface 0 | class 0xff, subclass 0xff — vendor-specific |
+| Endpoints | bulk IN and bulk OUT, 64-byte packets |
 
-The picker is filtered to PASCO scientific's USB vendor id, **0x0945** (USB-IF
-registry). PASCO publish no product ids, so the vendor is the only filter
-available; the name check that follows is deliberately looser than the Bluetooth
-one, because a USB product string comes from the device descriptor and need not
-carry the interface-id suffix a BLE advertisement does. Only a name that decodes
-to a *different* interface id is refused.
+Unplugging the counter removes it from the picker, so this bridge is the
+counter's own interface and not some other PASCO device on the bench.
 
-USB is point-to-point to one counter, so the device/sensor split that BLE
-expresses as two GATT services has no analogue: both go out as the one HID
-output report, zero-padded to the length the report descriptor declares.
+**WebUSB, not WebHID or Web Serial.** A WebHID picker filtered to vendor 0x0945
+comes up *empty* — it is not a HID device. Web Serial does not see it either.
+WebUSB reaches it precisely because the interface is vendor-specific: no OS
+driver claims it, so the usual "WebUSB cannot claim what Windows already
+claimed" objection does not apply. `open()`, `selectConfiguration`, and
+`claimInterface(0)` all succeed.
 
-`scripts/probe/usb-probe.html` is the bring-up tool. It dumps what WebHID, Web
-Serial, and WebUSB each see of a plugged-in counter — vendor and product ids,
-the HID report descriptor, interface classes — and will open the device and
-exchange raw PASCO packets with it. Serve it with `npm run dev`.
+### The bulk pipe is in loopback
+
+The bridge answers but does not talk. **Every packet written to bulk OUT comes
+back on bulk IN byte-identical, about 1 ms later, whatever it contains.** A
+1-byte `00`, a valid `GCMD_READ_ONE_SAMPLE`, a 64-byte zero-padded frame,
+deliberate nonsense — all echo. An unconditional echo of arbitrary input is not
+a parser rejecting bad framing; it is the data path sitting in loopback. The
+counter meanwhile counts and beeps normally, and sends nothing unsolicited.
+
+Ruled out, so nobody repeats them:
+
+- **Framing.** Raw, length-prefixed (`02 05 04`), channel-prefixed on both the
+  device and sensor channel (`00 05 04`, `01 05 04`), and zero-padded to the
+  64-byte endpoint packet size. All echo.
+- **Vendor control IN.** All 64 requests 0x00–0x1f across the device and
+  interface recipients stall, without exception.
+- **Descriptors.** Strings give `"Pasco"` and `"Pasco USB Bridge"` and nothing
+  else. There is no BOS descriptor, so the device is not WebUSB-aware and
+  publishes no landing page.
+
+So the step that opens the data path is still unknown. `UsbGeigerTransport` is
+written as far as can be verified — it reaches the device, claims it, and moves
+bytes — and the connect button is gated behind **`?usbTransport=true`** so no
+user is offered a button that cannot yet succeed. The remaining lead is a USB
+capture of PASCO's own software (SPARKvue or Capstone) driving the counter over
+USB, which would show the initialisation sequence directly.
+
+`scripts/probe/usb-probe.html` is the bring-up tool that established all of the
+above, and `scripts/probe/probe-server.mjs` serves it while collecting its log
+to a file. It dumps what WebHID, Web Serial, and WebUSB each see, claims the
+bridge, sends arbitrary hex down the bulk pipe, and sweeps vendor control
+requests. Run `node scripts/probe/probe-server.mjs` and open the port it names.
 
 ## Charts
 

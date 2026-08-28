@@ -39,6 +39,22 @@ const radioactivityAndStatisticsQueryParameters = QueryStringMachine.getAll({
   },
 
   /**
+   * Offers the "Connect via USB" button on the Geiger counter screen.
+   *
+   * Off by default, and deliberately not `public`. The counter's USB port does
+   * present a reachable WebUSB interface — "Pasco USB Bridge", vendor 0x0945,
+   * class 0xff with bulk endpoints, and `claimInterface` succeeds — but its
+   * data path stays in loopback: every packet written comes back byte-identical,
+   * and nothing opens it that can be found by inspection. See
+   * doc/implementation-notes.md. Until that is solved the button would fail for
+   * every user, so only someone deliberately working on the USB path sees it.
+   */
+  usbTransport: {
+    type: "boolean",
+    defaultValue: false,
+  },
+
+  /**
    * G-M tube bias setpoint in volts for a connected Geiger counter.
    *
    * Surfaced as a slider in Preferences → Simulation. Range matches SPARKvue's

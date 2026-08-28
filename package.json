@@ -47,7 +47,7 @@
     "@biomejs/biome": "^2.5.10",
     "@playwright/test": "^1.62.1",
     "@types/node": "^24.13.3",
-    "@types/w3c-web-hid": "^1.0.7",
+    "@types/w3c-web-usb": "^1.0.14",
     "@types/web-bluetooth": "^0.0.21",
     "happy-dom": "^20.11.6",
     "jsdom": "^30.0.1",

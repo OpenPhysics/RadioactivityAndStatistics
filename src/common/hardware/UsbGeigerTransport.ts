@@ -1,27 +1,47 @@
 /**
  * UsbGeigerTransport.ts
  *
- * WebHID transport for a PASCO Wireless Geiger Counter (PS-3238) plugged into
+ * WebUSB transport for a PASCO Wireless Geiger Counter (PS-3238) plugged into
  * the host over USB.
  *
- * This is the only file in the sim that touches `navigator.hid`. Like the
+ * This is the only file in the sim that touches `navigator.usb`. Like the
  * Bluetooth transport it moves opaque PASCO packets and nothing more; the
  * protocol above it is identical, which is the whole point of
  * {@link TGeigerTransport}.
  *
- * ── Why HID rather than WebUSB or Web Serial ──────────────────────────────────
- * PASCO's USB devices enumerate as HID, so the host OS claims them with its own
- * driver. WebUSB cannot claim an interface the OS driver already owns, which
- * rules it out on Windows and macOS; Web Serial only sees CDC-ACM ports, which
- * this device does not expose. WebHID is the one API that reaches it, and it
- * needs no driver installation — the same reason SPARKvue's browser build can
- * talk to wired sensors.
+ * ── What the counter's USB port actually is ───────────────────────────────────
+ * Measured against a PS-3238 on 2026-08-28, and every claim here is from that
+ * capture rather than from documentation — PASCO publish none, and neither open
+ * PASCO library touches USB at all.
  *
- * ── The user gesture ──────────────────────────────────────────────────────────
- * `navigator.hid.requestDevice` has the same rule as `requestDevice` on
- * Bluetooth: it only opens its picker during a live user gesture, and a gesture
- * does not survive an `await`. `connect()` therefore runs synchronously up to
- * that call.
+ *   manufacturer  "Pasco"          vendor  0x0945 (USB-IF registry)
+ *   product       "Pasco USB Bridge"  product 0x0002, no serial number
+ *   interface 0   class 0xff, subclass 0xff (vendor-specific)
+ *   endpoints     bulk IN and bulk OUT, 64-byte packets
+ *
+ * It is NOT a HID device: a WebHID picker filtered to vendor 0x0945 comes up
+ * empty. Web Serial does not see it either. WebUSB can claim it precisely
+ * because the interface is vendor-specific — no OS driver owns it, so the usual
+ * "WebUSB cannot claim what Windows already claimed" objection does not apply.
+ * `device.open()`, `selectConfiguration`, and `claimInterface(0)` all succeed.
+ *
+ * ── Why this is gated behind ?usbTransport=true ───────────────────────────────
+ * The bridge answers, but it does not yet *talk*. Every packet written to bulk
+ * OUT comes back on bulk IN byte-identical, about 1 ms later, whatever it
+ * contains — a 1-byte 0x00, a valid GCMD_READ_ONE_SAMPLE, a 64-byte padded
+ * frame, deliberate nonsense. An unconditional echo of arbitrary input is not a
+ * parser rejecting bad framing; it is the data path sitting in loopback. The
+ * counter meanwhile counts and beeps normally and sends nothing unsolicited.
+ *
+ * What has been ruled out: every framing variant tried (raw, length-prefixed,
+ * channel-prefixed, zero-padded to the endpoint packet size); all 64 vendor
+ * control IN requests 0x00-0x1f on both device and interface recipients, which
+ * stall without exception; and the descriptors, which name the device and
+ * nothing else, with no BOS descriptor and so no WebUSB landing page.
+ *
+ * So the code below is the transport as far as it can be verified: it reaches
+ * the device, claims it, and moves bytes. The step that opens the data path is
+ * still unknown, which is why the button is off by default.
  */
 
 import {
@@ -35,79 +55,80 @@ import {
 import { isOtherPascoDeviceName, PASCO_USB_VENDOR_ID, parseAdvertisedName } from "./PascoProtocol.js";
 import { toHex, trace } from "./transportTrace.js";
 
+/** Bulk packet size the bridge's endpoints declare. */
+const BULK_PACKET_BYTES = 64;
+
 export class UsbGeigerTransport implements TGeigerTransport {
   public readonly kind: TransportKindValue = TransportKind.USB;
 
-  private device: HIDDevice | null = null;
+  private device: USBDevice | null = null;
 
-  /** Report id the device expects on output, and how many bytes it wants. */
-  private outputReportId = 0;
-  private outputReportBytes = 0;
+  /** Interface and endpoint numbers, read off the descriptor at connect time. */
+  private interfaceNumber = 0;
+  private inEndpoint = 0;
+  private outEndpoint = 0;
+
+  /** False once the read loop should wind down. */
+  private isReading = false;
 
   private readonly callbacks: GeigerTransportCallbacks;
 
   /** Bound so it can be added and removed as an event listener. */
-  private readonly handleInputReport: (event: HIDInputReportEvent) => void;
-
-  /** Bound so it can be added and removed as an event listener. */
-  private readonly handleDisconnect: (event: HIDConnectionEvent) => void;
+  private readonly handleDisconnect: (event: USBConnectionEvent) => void;
 
   public constructor(callbacks: GeigerTransportCallbacks) {
     this.callbacks = callbacks;
 
-    this.handleInputReport = (event: HIDInputReportEvent) => {
-      const data = event.data;
-      const bytes = new Uint8Array(data.buffer, data.byteOffset, data.byteLength);
-      trace("usb", `report ${event.reportId} <- ${bytes.length}B: ${toHex(bytes)}`);
-      this.callbacks.onPacket(bytes);
-    };
-
-    // WebHID reports an unplug on the navigator, not on the device object.
-    this.handleDisconnect = (event: HIDConnectionEvent) => {
+    // WebUSB reports an unplug on the navigator, not on the device object.
+    this.handleDisconnect = (event: USBConnectionEvent) => {
       if (event.device === this.device) {
+        this.isReading = false;
         this.device = null;
         this.callbacks.onUnexpectedDisconnect();
       }
     };
   }
 
-  /** Whether the HID device is currently open. */
   public get isConnected(): boolean {
     return this.device?.opened === true;
   }
 
   public get info(): GeigerDeviceInfo | null {
-    const productName = this.device?.productName;
-    if (!productName) {
+    const device = this.device;
+    if (!device) {
       return null;
     }
+    // The bridge reports its own product string ("Pasco USB Bridge"), not the
+    // counter's advertised name, so there is no serial to parse out of it.
+    const name = device.productName ?? "Pasco USB Bridge";
     return {
-      advertisedName: productName,
-      serialId: parseAdvertisedName(productName).serialId,
+      advertisedName: name,
+      serialId: device.serialNumber ?? parseAdvertisedName(name).serialId,
       transport: TransportKind.USB,
     };
   }
 
   /**
-   * Shows the browser's HID picker and opens the chosen counter.
+   * Shows the browser's USB picker and claims the counter's bridge interface.
    *
    * Must be called from a user gesture. Throws {@link DeviceSelectionCancelled}
    * when the user dismisses the picker without choosing.
    */
   public async connect(): Promise<void> {
-    if (!navigator.hid) {
-      throw new Error("WebHID is not available in this browser");
+    if (!navigator.usb) {
+      throw new Error("WebUSB is not available in this browser");
     }
 
-    // Filtering by PASCO's USB vendor id keeps the picker to their hardware;
-    // the browser shows nothing else, so a user cannot pick a stray keyboard.
-    const devices = await navigator.hid.requestDevice({
-      filters: [{ vendorId: PASCO_USB_VENDOR_ID }],
-    });
-
-    const device = devices[0];
-    if (!device) {
-      throw new DeviceSelectionCancelled();
+    let device: USBDevice;
+    try {
+      device = await navigator.usb.requestDevice({ filters: [{ vendorId: PASCO_USB_VENDOR_ID }] });
+    } catch (error) {
+      // The picker rejects with NotFoundError both when the user cancels and
+      // when nothing matched; either way there is no device to connect to.
+      if (error instanceof Error && error.name === "NotFoundError") {
+        throw new DeviceSelectionCancelled();
+      }
+      throw error;
     }
 
     // A different PASCO sensor would decode into nonsense registers. The check
@@ -119,99 +140,122 @@ export class UsbGeigerTransport implements TGeigerTransport {
     }
 
     this.device = device;
-    device.addEventListener("inputreport", this.handleInputReport);
-    navigator.hid.addEventListener("disconnect", this.handleDisconnect);
+    navigator.usb.addEventListener("disconnect", this.handleDisconnect);
 
-    if (!device.opened) {
-      await device.open();
+    await device.open();
+    const firstConfiguration = device.configurations[0];
+    if (device.configuration === null && firstConfiguration) {
+      await device.selectConfiguration(firstConfiguration.configurationValue);
     }
-    this.adoptOutputReportLayout(device);
+    this.adoptEndpoints(device);
+    await device.claimInterface(this.interfaceNumber);
 
-    trace("usb", `opened ${device.productName}`, {
-      vendorId: device.vendorId,
-      productId: device.productId,
-      collections: device.collections.map((collection) => ({
-        usagePage: collection.usagePage,
-        usage: collection.usage,
-        inputReports: collection.inputReports?.map((report) => report.reportId),
-        outputReports: collection.outputReports?.map((report) => report.reportId),
-      })),
+    trace("usb", `claimed interface ${this.interfaceNumber}`, {
+      productName: device.productName,
+      inEndpoint: this.inEndpoint,
+      outEndpoint: this.outEndpoint,
     });
+
+    this.isReading = true;
+    // Deliberately not awaited: the loop runs for the life of the connection.
+    this.readLoop();
   }
 
-  /**
-   * Sends a command addressed to the counting sensor's channel.
-   *
-   * USB is point-to-point to a single counter, so the device/sensor split that
-   * BLE expresses as two GATT services has no analogue here: both channels are
-   * the one HID output report.
-   */
+  /** Sends a command addressed to the counting sensor's channel. */
   public async sendSensorCommand(command: ArrayBuffer): Promise<void> {
     await this.send(command);
   }
 
-  /** Sends a command addressed to the device-level channel. See {@link sendSensorCommand}. */
+  /**
+   * Sends a command addressed to the device-level channel.
+   *
+   * USB is point-to-point to a single counter, so the device/sensor split that
+   * BLE expresses as two GATT services has no analogue here: both go out on the
+   * one bulk endpoint.
+   */
   public async sendDeviceCommand(command: ArrayBuffer): Promise<void> {
     await this.send(command);
   }
 
-  /** Closes the device and forgets it. */
+  /** Releases the interface and closes the device. */
   public async disconnect(): Promise<void> {
     const device = this.device;
+    this.isReading = false;
     this.device = null;
 
-    // Drop the listeners first so closing does not look like an unplug.
-    device?.removeEventListener("inputreport", this.handleInputReport);
-    navigator.hid?.removeEventListener("disconnect", this.handleDisconnect);
+    // Drop the listener first so closing does not look like an unplug.
+    navigator.usb?.removeEventListener("disconnect", this.handleDisconnect);
 
     if (device?.opened) {
       try {
-        await device.close();
+        await device.releaseInterface(this.interfaceNumber);
       } catch {
         // The device may already be gone; nothing useful to do about it.
+      }
+      try {
+        await device.close();
+      } catch {
+        // Likewise.
       }
     }
   }
 
-  /**
-   * Writes one PASCO command as an HID output report.
-   *
-   * HID reports are fixed-length, so a short command is zero-padded out to the
-   * length the report descriptor declares. A device that declares no output
-   * report gets the command bytes unpadded.
-   */
+  /** Reads the interface and bulk endpoint numbers off the device descriptor. */
+  private adoptEndpoints(device: USBDevice): void {
+    const configuration = device.configuration;
+    const usbInterface = configuration?.interfaces[0];
+    const alternate = usbInterface?.alternates[0];
+    if (!(usbInterface && alternate)) {
+      throw new Error("The PASCO USB bridge exposes no usable interface");
+    }
+
+    this.interfaceNumber = usbInterface.interfaceNumber;
+    const bulkIn = alternate.endpoints.find((endpoint) => endpoint.direction === "in" && endpoint.type === "bulk");
+    const bulkOut = alternate.endpoints.find((endpoint) => endpoint.direction === "out" && endpoint.type === "bulk");
+    if (!(bulkIn && bulkOut)) {
+      throw new Error("The PASCO USB bridge exposes no bulk endpoint pair");
+    }
+    this.inEndpoint = bulkIn.endpointNumber;
+    this.outEndpoint = bulkOut.endpointNumber;
+  }
+
+  /** Writes one PASCO command to the bulk OUT endpoint. */
   private async send(command: ArrayBuffer): Promise<void> {
     const device = this.device;
     if (!(device && this.isConnected)) {
       throw new Error("Geiger counter is not connected");
     }
-
-    const commandBytes = new Uint8Array(command);
-    const report = new Uint8Array(Math.max(this.outputReportBytes, commandBytes.length));
-    report.set(commandBytes);
-
-    trace("usb", `report ${this.outputReportId} -> ${toHex(report)}`);
+    const bytes = new Uint8Array(command);
+    trace("usb", `write -> ${toHex(bytes)}`);
     try {
-      await device.sendReport(this.outputReportId, report);
+      await device.transferOut(this.outEndpoint, bytes);
     } catch (error) {
-      trace("usb", "sendReport FAILED", error);
+      trace("usb", "transferOut FAILED", error);
       throw error;
     }
   }
 
   /**
-   * Reads the output report's id and length off the HID report descriptor.
+   * Reads bulk IN for the life of the connection, handing packets upward.
    *
-   * A report id of 0 means the device uses unnumbered reports, which is what
-   * `sendReport` expects to be told in that case.
+   * A transfer that fails ends the loop rather than spinning: the device is
+   * gone, or the interface was released underneath it.
    */
-  private adoptOutputReportLayout(device: HIDDevice): void {
-    const outputReports = device.collections.flatMap((collection) => collection.outputReports ?? []);
-    const report = outputReports[0];
-    this.outputReportId = report?.reportId ?? 0;
-    this.outputReportBytes = (report?.items ?? []).reduce(
-      (total, item) => total + ((item.reportSize ?? 0) * (item.reportCount ?? 0)) / 8,
-      0,
-    );
+  private async readLoop(): Promise<void> {
+    while (this.isReading && this.device) {
+      let result: USBInTransferResult;
+      try {
+        result = await this.device.transferIn(this.inEndpoint, BULK_PACKET_BYTES);
+      } catch (error) {
+        trace("usb", "transferIn FAILED", error);
+        return;
+      }
+      const data = result.data;
+      if (data && data.byteLength > 0) {
+        const bytes = new Uint8Array(data.buffer, data.byteOffset, data.byteLength);
+        trace("usb", `read <- ${bytes.length}B: ${toHex(bytes)}`);
+        this.callbacks.onPacket(bytes);
+      }
+    }
   }
 }
