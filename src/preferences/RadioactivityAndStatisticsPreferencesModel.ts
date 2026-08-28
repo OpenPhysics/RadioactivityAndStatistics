@@ -38,6 +38,15 @@ export class RadioactivityAndStatisticsPreferencesModel {
    */
   public readonly tubeVoltageProperty: NumberProperty;
 
+  /**
+   * Whether the acquisition panel shows the "Samples per run" slider.
+   *
+   * Off by default: every bounded run then collects a fixed number of
+   * samples, so the run length isn't yet another variable a student has to
+   * reason about. Check it to let them set it themselves.
+   */
+  public readonly showSamplesPerRunControlProperty: BooleanProperty;
+
   public constructor(tandem?: Tandem) {
     this.showDiagnosticsProperty = new BooleanProperty(
       radioactivityAndStatisticsQueryParameters.showDiagnostics,
@@ -54,12 +63,18 @@ export class RadioactivityAndStatisticsPreferencesModel {
       units: "V",
       ...(tandem ? { tandem: tandem.createTandem("tubeVoltageProperty") } : {}),
     });
+
+    this.showSamplesPerRunControlProperty = new BooleanProperty(
+      radioactivityAndStatisticsQueryParameters.showSamplesPerRunControl,
+      tandem ? { tandem: tandem.createTandem("showSamplesPerRunControlProperty") } : undefined,
+    );
   }
 
   public reset(): void {
     this.showDiagnosticsProperty.reset();
     this.beepEnabledProperty.reset();
     this.tubeVoltageProperty.reset();
+    this.showSamplesPerRunControlProperty.reset();
   }
 }
 

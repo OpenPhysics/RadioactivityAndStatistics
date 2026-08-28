@@ -30,6 +30,7 @@ export class DeviceScreen extends Screen<DeviceModel, RadioactivityScreenView> {
           model,
           CountSourceType.GEIGER_COUNTER,
           preferences.showDiagnosticsProperty,
+          preferences.showSamplesPerRunControlProperty,
           StringManager.getInstance().getDeviceA11yStrings().controls,
           {
             screenSummaryContent: new DeviceScreenSummaryContent(model),

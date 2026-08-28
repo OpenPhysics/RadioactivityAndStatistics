@@ -39,9 +39,15 @@ import type { CountSample } from "./CountSample.js";
 import { CountSourceType, type CountSourceTypeValue, type TCountSource } from "./CountSource.js";
 import { fitGaussian, type GaussianFitResult } from "./GaussianFit.js";
 import { GeigerCountSource, type GeigerDeviceControls } from "./GeigerCountSource.js";
-import { chooseBinWidth, createHistogram, type Histogram } from "./Histogram.js";
+import { CountTally, chooseBinWidthOf, createHistogramOf, type Histogram } from "./Histogram.js";
 import { SimulatedCountSource } from "./SimulatedCountSource.js";
-import { computeStatistics, type SampleStatistics } from "./Statistics.js";
+import {
+  accumulateValue,
+  EMPTY_ACCUMULATOR,
+  type SampleStatistics,
+  type StatisticsAccumulator,
+  statisticsOf,
+} from "./Statistics.js";
 
 export type RadioactivityModelOptions = {
   /** Host-side Geiger controls from Preferences → Simulation. */
@@ -64,6 +70,14 @@ export type RadioactivityModelOptions = {
 
   /** Decimal places shown for the counting interval control. Defaults to {@link COUNTING_INTERVAL_DECIMAL_PLACES}. */
   readonly countingIntervalDecimalPlaces?: number;
+
+  /**
+   * Initial (and reset) value of {@link RadioactivityModel.isContinuousProperty}.
+   * Defaults to false. Without the "samples per run" control, a run has no
+   * way to change the sample count it stops at, so screens without that
+   * control default to continuous recording instead.
+   */
+  readonly defaultContinuous?: boolean;
 };
 
 export class RadioactivityModel implements TModel {
@@ -138,9 +152,6 @@ export class RadioactivityModel implements TModel {
 
   // ── Derived results ────────────────────────────────────────────────────────
 
-  /** Just the counts, in order — the input to every statistic. */
-  public readonly countsProperty: TReadOnlyProperty<readonly number[]>;
-
   /** Mean, standard deviation, and standard deviation of the mean. */
   public readonly statisticsProperty: TReadOnlyProperty<SampleStatistics>;
 
@@ -159,11 +170,30 @@ export class RadioactivityModel implements TModel {
   /** Source running total at the start of the interval being counted. */
   private intervalStartTotal = 0;
 
+  /** Writable views of the two Properties folded forward from the run. */
+  private readonly statistics: Property<SampleStatistics>;
+  private readonly histogram: Property<Histogram>;
+
+  /** Welford state over every count recorded in the current run. */
+  private accumulator: StatisticsAccumulator = EMPTY_ACCUMULATOR;
+
+  /** Frequency of each count value in the current run — the histogram's input. */
+  private readonly tally = new CountTally();
+
+  /** How many samples have already been folded into the two above. */
+  private consumedSampleCount = 0;
+
+  /** True while the automatic width is being mirrored, to break the cycle. */
+  private isMirroringBinWidth = false;
+
   /** Retained so the source-change listener can be removed on dispose. */
   private readonly sourceTypeListener: () => void;
 
-  /** Retained so the automatic-bin-width listener can be removed on dispose. */
-  private readonly autoBinWidthListener: () => void;
+  /** Retained so the run listener can be removed on dispose. */
+  private readonly samplesListener: (samples: readonly CountSample[]) => void;
+
+  /** Retained so the bin-width listener can be removed on dispose. */
+  private readonly binWidthListener: () => void;
 
   public constructor(options?: RadioactivityModelOptions) {
     this.simulatedSource = new SimulatedCountSource(DEFAULT_ACTIVITY);
@@ -187,7 +217,7 @@ export class RadioactivityModel implements TModel {
       validValues: SPEED_MULTIPLIER_CHOICES,
     });
     this.samplesPerRunProperty = new NumberProperty(DEFAULT_SAMPLES_PER_RUN, { range: SAMPLES_PER_RUN_RANGE });
-    this.isContinuousProperty = new BooleanProperty(false);
+    this.isContinuousProperty = new BooleanProperty(options?.defaultContinuous ?? false);
 
     this.isRecordingProperty = new BooleanProperty(false);
     this.samplesProperty = new Property<readonly CountSample[]>([]);
@@ -199,38 +229,38 @@ export class RadioactivityModel implements TModel {
     this.isAutoBinWidthProperty = new BooleanProperty(true);
     this.manualBinWidthProperty = new NumberProperty(BIN_WIDTH_RANGE.min, { range: BIN_WIDTH_RANGE });
 
-    this.countsProperty = new DerivedProperty([this.samplesProperty], (samples) =>
-      samples.map((sample) => sample.counts),
-    );
-    this.statisticsProperty = new DerivedProperty([this.countsProperty], (counts) => computeStatistics(counts));
+    // Statistics and the histogram are folded forward from the run rather than
+    // derived from it: a run only ever grows by appending, so each new interval
+    // costs one Welford update and one tally increment, whatever the run length.
+    // As DerivedProperties they re-read the entire run on every completed
+    // interval — an O(N log N) sort among it, for the automatic bin width —
+    // which at 100x is unbounded per-frame work that grows for as long as the
+    // sim is left running.
+    this.statistics = new Property<SampleStatistics>(statisticsOf(EMPTY_ACCUMULATOR));
+    this.statisticsProperty = this.statistics;
+    this.histogram = new Property<Histogram>(createHistogramOf(this.tally));
+    this.histogramProperty = this.histogram;
+
     this.poissonDeviationProperty = new DerivedProperty([this.statisticsProperty], (statistics) =>
       Math.sqrt(Math.max(statistics.mean, 0)),
-    );
-
-    this.histogramProperty = new DerivedProperty(
-      [this.countsProperty, this.isAutoBinWidthProperty, this.manualBinWidthProperty],
-      (counts, isAuto, manualWidth) => createHistogram(counts, isAuto ? chooseBinWidth(counts) : manualWidth),
     );
     this.gaussianFitProperty = new DerivedProperty([this.histogramProperty], (histogram) =>
       fitGaussian(histogram.binCenters, histogram.binCounts),
     );
 
-    // While automatic binning is on, mirror the chosen width into the manual
-    // Property. The bin-width control is disabled but still visible, so this is
-    // what lets it report the width actually in use rather than a stale number
-    // — and unchecking "automatic" then starts from where the data left off,
-    // instead of jumping the histogram to an unrelated width.
-    // Safe against reentrancy: this reacts to the counts and the auto flag,
-    // both of which sit upstream of histogramProperty, never downstream.
-    this.autoBinWidthListener = () => {
-      if (!this.isAutoBinWidthProperty.value) {
-        return;
+    this.samplesListener = (samples) => this.foldRunForward(samples);
+    this.samplesProperty.link(this.samplesListener);
+
+    // Re-bin when the width changes, but not while the automatic width is being
+    // mirrored into manualBinWidthProperty below — that write is part of a
+    // rebin already in progress.
+    this.binWidthListener = () => {
+      if (!this.isMirroringBinWidth) {
+        this.rebuildHistogram();
       }
-      const chosen = chooseBinWidth(this.countsProperty.value);
-      this.manualBinWidthProperty.value = BIN_WIDTH_RANGE.constrainValue(Math.round(chosen));
     };
-    this.countsProperty.link(this.autoBinWidthListener);
-    this.isAutoBinWidthProperty.link(this.autoBinWidthListener);
+    this.isAutoBinWidthProperty.link(this.binWidthListener);
+    this.manualBinWidthProperty.link(this.binWidthListener);
 
     this.sourceDescriptionProperty = new DerivedProperty(
       [this.sourceTypeProperty, this.geigerSource.deviceInfoProperty, this.simulatedSource.activityProperty],
@@ -317,22 +347,65 @@ export class RadioactivityModel implements TModel {
     // still arriving each frame. MAXIMUM_STEP_DT already bounds remainingDt,
     // and the shortest interval (0.25 s) keeps the iteration count here
     // trivial even at the fastest speed multiplier, so no cap is needed.
+    // Every quantity the loop touches is accumulated locally and published once,
+    // after the loop. Writing to the Properties inside it instead would fire the
+    // whole derived chain — counts, statistics, histogram, Gaussian fit, and the
+    // views listening to them — once per completed interval. At 100x that is
+    // hundreds of full recomputes in a single frame, which lengthens the frame,
+    // which enlarges the next dt: the sim gets slower the longer it runs at
+    // speed, until it stops responding.
+    const samples = this.samplesProperty.value;
+    let appended: CountSample[] | null = null;
+    let sampleCount = samples.length;
+    let elapsed = this.intervalElapsedProperty.value;
+    let runTime = this.runTimeProperty.value;
+    let lastCountRate = this.lastCountRateProperty.value;
+
     while (remainingDt > 0) {
-      const stepDt = Math.min(remainingDt, Math.max(interval - this.intervalElapsedProperty.value, 0));
+      const stepDt = Math.min(remainingDt, Math.max(interval - elapsed, 0));
 
       source.step(stepDt);
-      this.intervalElapsedProperty.value += stepDt;
-      this.intervalCountsProperty.value = source.totalCountsProperty.value - this.intervalStartTotal;
+      elapsed += stepDt;
 
       if (this.isRecordingProperty.value) {
-        this.runTimeProperty.value += stepDt;
+        runTime += stepDt;
       }
 
       remainingDt -= stepDt;
 
-      if (this.intervalElapsedProperty.value >= interval) {
-        this.completeInterval(interval);
+      if (elapsed >= interval) {
+        const counts = Math.max(0, Math.round(source.totalCountsProperty.value - this.intervalStartTotal));
+        lastCountRate = counts / interval;
+
+        if (this.isRecordingProperty.value) {
+          appended ??= [];
+          appended.push({
+            index: sampleCount + 1,
+            startTime: sampleCount * interval,
+            duration: interval,
+            counts,
+          });
+          sampleCount += 1;
+
+          if (!this.isContinuousProperty.value && sampleCount >= this.samplesPerRunProperty.value) {
+            this.stopRecording();
+          }
+        }
+
+        // Carry the remainder rather than zeroing it, so intervals do not drift
+        // relative to the frame rate over a long run.
+        elapsed -= interval;
+        this.intervalStartTotal = source.totalCountsProperty.value;
       }
+    }
+
+    this.intervalElapsedProperty.value = elapsed;
+    this.intervalCountsProperty.value = source.totalCountsProperty.value - this.intervalStartTotal;
+    this.runTimeProperty.value = runTime;
+    this.lastCountRateProperty.value = lastCountRate;
+
+    if (appended) {
+      this.samplesProperty.value = [...samples, ...appended];
     }
   }
 
@@ -355,37 +428,57 @@ export class RadioactivityModel implements TModel {
 
   public dispose(): void {
     this.sourceTypeProperty.unlink(this.sourceTypeListener);
-    this.countsProperty.unlink(this.autoBinWidthListener);
-    this.isAutoBinWidthProperty.unlink(this.autoBinWidthListener);
+    this.samplesProperty.unlink(this.samplesListener);
+    this.isAutoBinWidthProperty.unlink(this.binWidthListener);
+    this.manualBinWidthProperty.unlink(this.binWidthListener);
     this.simulatedSource.dispose();
     this.geigerSource.dispose();
   }
 
-  /** Turns the interval just finished into a sample and starts the next one. */
-  private completeInterval(interval: number): void {
-    const counts = Math.max(0, Math.round(this.intervalCountsProperty.value));
-    this.lastCountRateProperty.value = counts / interval;
-
-    if (this.isRecordingProperty.value) {
-      const samples = this.samplesProperty.value;
-      const sample: CountSample = {
-        index: samples.length + 1,
-        startTime: samples.length * interval,
-        duration: interval,
-        counts,
-      };
-      this.samplesProperty.value = [...samples, sample];
-
-      if (!this.isContinuousProperty.value && this.samplesProperty.value.length >= this.samplesPerRunProperty.value) {
-        this.stopRecording();
-      }
+  /**
+   * Brings the statistics and the histogram up to date with the run.
+   *
+   * The run is append-only in normal operation, so the usual path folds in just
+   * the samples that are new since the last call. Anything else — a cleared run,
+   * a reset — is a shrink, and rebuilds from scratch, which is O(N) but happens
+   * once rather than every frame.
+   */
+  private foldRunForward(samples: readonly CountSample[]): void {
+    if (samples.length < this.consumedSampleCount) {
+      this.accumulator = EMPTY_ACCUMULATOR;
+      this.tally.clear();
+      this.consumedSampleCount = 0;
     }
 
-    // Carry the remainder rather than zeroing it, so intervals do not drift
-    // relative to the frame rate over a long run.
-    this.intervalElapsedProperty.value -= interval;
-    this.intervalStartTotal = this.activeSourceProperty.value.totalCountsProperty.value;
-    this.intervalCountsProperty.value = 0;
+    for (let index = this.consumedSampleCount; index < samples.length; index++) {
+      const counts = samples[index]?.counts ?? 0;
+      this.accumulator = accumulateValue(this.accumulator, counts);
+      this.tally.add(counts);
+    }
+    this.consumedSampleCount = samples.length;
+
+    this.statistics.value = statisticsOf(this.accumulator);
+    this.rebuildHistogram();
+  }
+
+  /**
+   * Re-bins the run at the width currently in force.
+   *
+   * While automatic binning is on, the chosen width is mirrored into the manual
+   * Property. The bin-width control is disabled but still visible, so this is
+   * what lets it report the width actually in use rather than a stale number —
+   * and unchecking "automatic" then starts from where the data left off,
+   * instead of jumping the histogram to an unrelated width.
+   */
+  private rebuildHistogram(): void {
+    if (this.isAutoBinWidthProperty.value) {
+      const chosen = BIN_WIDTH_RANGE.constrainValue(Math.round(chooseBinWidthOf(this.tally)));
+      this.isMirroringBinWidth = true;
+      this.manualBinWidthProperty.value = chosen;
+      this.isMirroringBinWidth = false;
+    }
+
+    this.histogram.value = createHistogramOf(this.tally, this.manualBinWidthProperty.value);
   }
 
   /** Rebases the counting cycle on the active source's current total. */

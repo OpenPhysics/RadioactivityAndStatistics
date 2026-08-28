@@ -153,6 +153,8 @@
     "beepEnabled": "Geiger counter beep",
     "beepEnabledDescription": "When unchecked, silences the audible count indicator on a connected PASCO Wireless Geiger Counter.",
     "tubeVoltage": "G-M tube voltage",
-    "tubeVoltageDescription": "Bias applied to a connected counter's G-M tube. Use a plateau experiment to explore how count rate depends on voltage."
+    "tubeVoltageDescription": "Bias applied to a connected counter's G-M tube. Use a plateau experiment to explore how count rate depends on voltage.",
+    "showSamplesPerRunControl": "Samples per run control",
+    "showSamplesPerRunControlDescription": "Adds a slider to the acquisition panel for changing how many samples a bounded run collects. Otherwise every run collects a fixed number of samples."
   }
 }

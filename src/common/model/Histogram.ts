@@ -56,6 +56,79 @@ const MINIMUM_TARGET_BINS = 8;
 const MAXIMUM_TARGET_BINS = 30;
 
 /**
+ * A running tally of how many measurements produced each integer count.
+ *
+ * Everything downstream — the bin width, the bars, the extremes — depends on
+ * the data only through these frequencies, never through the order or the
+ * identity of individual measurements. So a run of any length compresses to one
+ * number per *distinct count value*, and both the Freedman–Diaconis width and
+ * the binning become O(distinct values) instead of O(N) — and the width no
+ * longer needs a sort of the whole run at all.
+ *
+ * That matters because the alternative grows without bound: at 100x a
+ * continuous run banks hundreds of intervals per real second, and re-sorting
+ * every one of them on every frame is what makes the sim heavier the longer it
+ * has been left running. The spread of a counting distribution does not grow
+ * with N — it is a few √λ wide — so this tally stays a fixed size while the run
+ * does not.
+ *
+ * Mutable by design: it is a live accumulator, folded forward one measurement
+ * at a time. The pure array functions below build one and throw it away.
+ */
+export class CountTally {
+  /** frequencies[value] — how many measurements came out exactly `value`. */
+  private readonly frequencies: number[] = [];
+  private samples = 0;
+  private smallest = Number.POSITIVE_INFINITY;
+  private largest = Number.NEGATIVE_INFINITY;
+
+  /** Folds in one measurement. Counts are integers, so the value is rounded. */
+  public add(value: number): void {
+    const count = Math.max(0, Math.round(value));
+    this.frequencies[count] = (this.frequencies[count] ?? 0) + 1;
+    this.samples += 1;
+    this.smallest = Math.min(this.smallest, count);
+    this.largest = Math.max(this.largest, count);
+  }
+
+  /** Forgets everything, as when a run is cleared. */
+  public clear(): void {
+    this.frequencies.length = 0;
+    this.samples = 0;
+    this.smallest = Number.POSITIVE_INFINITY;
+    this.largest = Number.NEGATIVE_INFINITY;
+  }
+
+  public get totalSamples(): number {
+    return this.samples;
+  }
+
+  /** Smallest count observed; +∞ when empty. */
+  public get minimum(): number {
+    return this.smallest;
+  }
+
+  /** Largest count observed; −∞ when empty. */
+  public get maximum(): number {
+    return this.largest;
+  }
+
+  /** Frequency of one count value. */
+  public frequencyOf(value: number): number {
+    return this.frequencies[value] ?? 0;
+  }
+}
+
+/** Builds a tally from a complete data set. */
+export function createTally(values: readonly number[]): CountTally {
+  const tally = new CountTally();
+  for (const value of values) {
+    tally.add(value);
+  }
+  return tally;
+}
+
+/**
  * Chooses an integer bin width using the Freedman–Diaconis rule, then keeps the
  * resulting bin count inside a legible range.
  *
@@ -66,20 +139,19 @@ const MAXIMUM_TARGET_BINS = 30;
  * Counts are integers, so the width can never go below 1 — a narrow spread
  * simply gets as many bins as it has distinct values.
  */
-export function chooseBinWidth(values: readonly number[]): number {
-  if (values.length < 4) {
+export function chooseBinWidthOf(tally: CountTally): number {
+  if (tally.totalSamples < 4) {
     return 1;
   }
 
-  const sorted = [...values].sort((a, b) => a - b);
-  const interquartileRange = quantile(sorted, 0.75) - quantile(sorted, 0.25);
-  const span = (sorted[sorted.length - 1] ?? 0) - (sorted[0] ?? 0) + 1;
+  const interquartileRange = quantileOf(tally, 0.75) - quantileOf(tally, 0.25);
+  const span = tally.maximum - tally.minimum + 1;
 
   if (interquartileRange <= 0) {
     return 1;
   }
 
-  const idealWidth = 2 * interquartileRange * values.length ** (-1 / 3);
+  const idealWidth = 2 * interquartileRange * tally.totalSamples ** (-1 / 3);
   let width = Math.max(1, Math.round(idealWidth));
 
   // Too few bins to show a shape: narrow them until there are enough.
@@ -94,47 +166,76 @@ export function chooseBinWidth(values: readonly number[]): number {
   return Math.max(1, width);
 }
 
-/** Linearly interpolated quantile of an already-sorted array. */
-function quantile(sorted: readonly number[], fraction: number): number {
-  if (sorted.length === 0) {
+/** {@link chooseBinWidthOf} for a caller holding a plain array. */
+export function chooseBinWidth(values: readonly number[]): number {
+  return chooseBinWidthOf(createTally(values));
+}
+
+/**
+ * Linearly interpolated quantile, read off the cumulative frequencies.
+ *
+ * Identical to indexing a sorted copy of the data at (N − 1) · fraction, which
+ * is what this replaces — one walk over the distinct values finds both the
+ * bracketing order statistics without materialising the sorted array.
+ */
+function quantileOf(tally: CountTally, fraction: number): number {
+  if (tally.totalSamples === 0) {
     return 0;
   }
-  const position = (sorted.length - 1) * fraction;
+
+  const position = (tally.totalSamples - 1) * fraction;
   const lowerIndex = Math.floor(position);
   const upperIndex = Math.ceil(position);
-  const lower = sorted[lowerIndex] ?? 0;
-  const upper = sorted[upperIndex] ?? lower;
+
+  let cumulative = 0;
+  let lower = tally.maximum;
+  let upper = tally.maximum;
+  let haveLower = false;
+
+  for (let value = tally.minimum; value <= tally.maximum; value++) {
+    cumulative += tally.frequencyOf(value);
+    if (!haveLower && cumulative > lowerIndex) {
+      lower = value;
+      haveLower = true;
+    }
+    if (cumulative > upperIndex) {
+      upper = value;
+      break;
+    }
+  }
+
   return lower + (upper - lower) * (position - lowerIndex);
 }
 
 /**
- * Bins count measurements.
+ * Bins a tally of count measurements.
  *
- * @param values - the measured counts, one per counting interval
- * @param binWidth - integer bin width; when omitted, chosen by {@link chooseBinWidth}
+ * @param tally - the run so far
+ * @param binWidth - integer bin width; when omitted, chosen by {@link chooseBinWidthOf}
  */
-export function createHistogram(values: readonly number[], binWidth?: number): Histogram {
-  if (values.length === 0) {
+export function createHistogramOf(tally: CountTally, binWidth?: number): Histogram {
+  if (tally.totalSamples === 0) {
     return EMPTY_HISTOGRAM;
   }
 
-  const width = Math.max(1, Math.round(binWidth ?? chooseBinWidth(values)));
-  let minimum = Number.POSITIVE_INFINITY;
-  let maximum = Number.NEGATIVE_INFINITY;
-  for (const value of values) {
-    minimum = Math.min(minimum, value);
-    maximum = Math.max(maximum, value);
-  }
+  const width = Math.max(1, Math.round(binWidth ?? chooseBinWidthOf(tally)));
 
   // Snap the first edge down to a multiple of the bin width so that re-binning
   // the same data with a different width keeps the bars aligned to the axis.
-  const minimumEdge = Math.floor(minimum / width) * width;
-  const binCount = Math.min(MAXIMUM_BIN_COUNT, Math.floor((maximum - minimumEdge) / width) + 1);
+  const minimumEdge = Math.floor(tally.minimum / width) * width;
+  const binCount = Math.min(MAXIMUM_BIN_COUNT, Math.floor((tally.maximum - minimumEdge) / width) + 1);
 
   const binCounts = new Array<number>(binCount).fill(0);
-  for (const value of values) {
+  let maximumBinCount = 0;
+  for (let value = tally.minimum; value <= tally.maximum; value++) {
+    const frequency = tally.frequencyOf(value);
+    if (frequency === 0) {
+      continue;
+    }
     const index = Math.min(binCount - 1, Math.max(0, Math.floor((value - minimumEdge) / width)));
-    binCounts[index] = (binCounts[index] ?? 0) + 1;
+    const binned = (binCounts[index] ?? 0) + frequency;
+    binCounts[index] = binned;
+    maximumBinCount = Math.max(maximumBinCount, binned);
   }
 
   const binCenters = binCounts.map((_, index) => minimumEdge + (index + 0.5) * width);
@@ -144,9 +245,14 @@ export function createHistogram(values: readonly number[], binWidth?: number): H
     minimumEdge,
     binCounts,
     binCenters,
-    totalSamples: values.length,
-    maximumBinCount: Math.max(...binCounts),
+    totalSamples: tally.totalSamples,
+    maximumBinCount,
   };
+}
+
+/** {@link createHistogramOf} for a caller holding a plain array. */
+export function createHistogram(values: readonly number[], binWidth?: number): Histogram {
+  return createHistogramOf(createTally(values), binWidth);
 }
 
 /**

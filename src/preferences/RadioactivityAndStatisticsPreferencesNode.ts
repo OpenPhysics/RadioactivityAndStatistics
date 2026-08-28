@@ -104,6 +104,20 @@ export class RadioactivityAndStatisticsPreferencesNode extends VBox {
 
     const tubeVoltageDescription = new Text(prefStrings.tubeVoltageDescriptionStringProperty, descriptionOptions);
 
+    const showSamplesPerRunControlCheckbox = new Checkbox(
+      preferencesModel.showSamplesPerRunControlProperty,
+      new Text(prefStrings.showSamplesPerRunControlStringProperty, labelOptions),
+      {
+        ...checkboxOptions,
+        ...(tandem && { tandem: tandem.createTandem("showSamplesPerRunControlCheckbox") }),
+      },
+    );
+
+    const showSamplesPerRunControlDescription = new Text(
+      prefStrings.showSamplesPerRunControlDescriptionStringProperty,
+      descriptionOptions,
+    );
+
     super({
       align: "left",
       spacing: 12,
@@ -115,6 +129,8 @@ export class RadioactivityAndStatisticsPreferencesNode extends VBox {
         beepDescription,
         tubeVoltageControl,
         tubeVoltageDescription,
+        showSamplesPerRunControlCheckbox,
+        showSamplesPerRunControlDescription,
       ],
     });
   }

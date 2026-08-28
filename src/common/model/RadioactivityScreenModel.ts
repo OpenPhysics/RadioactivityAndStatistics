@@ -69,6 +69,9 @@ export class RadioactivityScreenModel implements TModel {
         beepEnabledProperty: preferences.beepEnabledProperty,
         tubeVoltageProperty: preferences.tubeVoltageProperty,
       },
+      // Without the "samples per run" control there is no way to change what
+      // a bounded run stops at, so default to continuous recording instead.
+      defaultContinuous: !preferences.showSamplesPerRunControlProperty.value,
       ...(options.countingIntervalRange !== undefined && { countingIntervalRange: options.countingIntervalRange }),
       ...(options.countingIntervalDelta !== undefined && { countingIntervalDelta: options.countingIntervalDelta }),
       ...(options.countingIntervalDecimalPlaces !== undefined && {

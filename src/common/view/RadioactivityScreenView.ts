@@ -45,6 +45,7 @@ export class RadioactivityScreenView extends ScreenView {
     model: RadioactivityScreenModel,
     fixedSourceType: CountSourceTypeValue,
     showDiagnosticsProperty: TReadOnlyProperty<boolean>,
+    showSamplesPerRunControlProperty: TReadOnlyProperty<boolean>,
     a11y: ScreenControlA11yStrings,
     providedOptions: RadioactivityScreenViewOptions,
   ) {
@@ -58,7 +59,12 @@ export class RadioactivityScreenView extends ScreenView {
 
     // ── Left column: choose a source, then set up and run a measurement ───────
     const sourcePanel = new SourcePanel(acquisition, fixedSourceType, a11y, showDiagnosticsProperty);
-    const acquisitionPanel = new AcquisitionPanel(acquisition, a11y);
+    const acquisitionPanel = new AcquisitionPanel(
+      acquisition,
+      a11y,
+      showSamplesPerRunControlProperty,
+      model.chartViewProperty,
+    );
 
     const leftColumn = new VBox({
       align: "left",

@@ -10,6 +10,8 @@
  */
 
 import { type CountSample, countRate } from "./CountSample.js";
+import type { Histogram } from "./Histogram.js";
+import { poissonExpectation } from "./Histogram.js";
 import type { SampleStatistics } from "./Statistics.js";
 
 /** Everything needed to describe a run in the exported file's header. */
@@ -20,6 +22,14 @@ export type ExportContext = {
   readonly intervalSeconds: number;
   /** Summary statistics of the run. */
   readonly statistics: SampleStatistics;
+  /**
+   * The binned distribution, written as a second table after the samples.
+   *
+   * Optional because it is only included when the histogram is the chart on
+   * screen: the bin width is chosen by the view's rule and only means something
+   * next to the bars the student is actually looking at.
+   */
+  readonly histogram?: Histogram;
 };
 
 /** Number of decimal places used for derived (non-integer) columns. */
@@ -55,7 +65,46 @@ export function samplesToCsv(samples: readonly CountSample[], context: ExportCon
     );
   }
 
+  if (context.histogram !== undefined) {
+    lines.push("", ...histogramSection(context.histogram, statistics.mean));
+  }
+
   return `${lines.join("\r\n")}\r\n`;
+}
+
+/**
+ * The binned distribution as a second table: one row per bin, with the observed
+ * frequency and the Poisson expectation drawn over the bars.
+ *
+ * The expectation is carried across because it cannot be recovered downstream
+ * without re-implementing the log-gamma Poisson term — a spreadsheet reading
+ * this file can plot observed against expected straight away.
+ */
+function histogramSection(histogram: Histogram, mean: number): string[] {
+  const expected = poissonExpectation(histogram, mean);
+  const lines = [
+    `# Histogram`,
+    `# Bin width (counts),${histogram.binWidth}`,
+    `# Bins,${histogram.binCounts.length}`,
+    `# bin_end is the exclusive upper edge; a bin holds the integer counts in [bin_start, bin_end)`,
+    "bin_index,bin_start,bin_end,bin_center,frequency,poisson_expected",
+  ];
+
+  for (let index = 0; index < histogram.binCounts.length; index++) {
+    const start = histogram.minimumEdge + index * histogram.binWidth;
+    lines.push(
+      [
+        index,
+        start,
+        start + histogram.binWidth,
+        histogram.binCenters[index] ?? start,
+        histogram.binCounts[index] ?? 0,
+        round(expected[index] ?? 0),
+      ].join(","),
+    );
+  }
+
+  return lines;
 }
 
 /** Rounds to the export precision without trailing zeros. */

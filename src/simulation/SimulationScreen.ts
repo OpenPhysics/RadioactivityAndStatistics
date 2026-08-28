@@ -30,6 +30,7 @@ export class SimulationScreen extends Screen<SimulationModel, RadioactivityScree
           model,
           CountSourceType.SIMULATED,
           preferences.showDiagnosticsProperty,
+          preferences.showSamplesPerRunControlProperty,
           StringManager.getInstance().getSimulationA11yStrings().controls,
           {
             screenSummaryContent: new SimulationScreenSummaryContent(model),

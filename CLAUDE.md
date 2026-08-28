@@ -89,6 +89,22 @@ requests, and the descriptors have been ruled out — see
 time here, and do not re-derive what is already eliminated. `?usbTransport=true`
 shows the button.
 
+**`samplesProperty` is append-only, and the statistics depend on it.**
+`statisticsProperty` and `histogramProperty` are folded forward one sample at a
+time (Welford state plus a `CountTally`), not derived from the run — a
+continuous run at 100x collects hundreds of intervals per second, and
+recomputing either from the whole array on each one is what makes the sim
+heavier the longer it is left going. The model reconciles by sample count: a
+shorter array rebuilds from scratch, a longer one folds in the tail. Replacing
+the array with different contents of the same or greater length will silently
+desync the statistics from the data.
+
+**Do not publish inside the step loop.** One frame at a speed multiplier
+completes many counting intervals. Writing `samplesProperty` (or the interval
+Properties) per interval fires the whole derived chain, and the views with it,
+hundreds of times in a frame — which lengthens the frame, which enlarges the
+next `dt`. `step()` accumulates in locals and publishes once, at the end.
+
 ## Query parameters
 
 | Parameter | Effect |
@@ -98,6 +114,7 @@ shows the button.
 | `?tubeVoltage=500` | G-M tube bias setpoint in volts (Preferences slider; applied over the open link) |
 | `?debugTransport=true` | Byte-level tracing of both directions on either wire (`?debugBluetooth=true` still works) |
 | `?usbTransport=true` | Offer the "Connect via USB" button. Off by default: the USB data path is unsolved |
+| `?showSamplesPerRunControl=true` | Show the "Samples per run" slider on the acquisition panel |
 
 Also surfaced in Preferences → Simulation.
 

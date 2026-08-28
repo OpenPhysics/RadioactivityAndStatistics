@@ -65,6 +65,22 @@ const radioactivityAndStatisticsQueryParameters = QueryStringMachine.getAll({
     defaultValue: TUBE_VOLTAGE_CONTROL_RANGE.default,
     public: true,
   },
+
+  /**
+   * Shows the "Samples per run" slider on the acquisition panel, letting the
+   * student change how many samples a bounded run collects.
+   *
+   * Off by default: with the slider hidden, every run collects the same fixed
+   * DEFAULT_SAMPLES_PER_RUN, which keeps the run length from being a variable
+   * a student has to think about before the statistics itself makes sense.
+   *
+   * Surfaced in Preferences → Simulation.
+   */
+  showSamplesPerRunControl: {
+    type: "boolean",
+    defaultValue: false,
+    public: true,
+  },
 });
 
 RadioactivityAndStatisticsNamespace.register(

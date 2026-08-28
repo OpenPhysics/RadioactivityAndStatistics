@@ -153,6 +153,8 @@
     "beepEnabled": "Bip du compteur Geiger",
     "beepEnabledDescription": "Décochez pour couper l'indicateur sonore des coups sur un compteur Geiger sans fil PASCO connecté.",
     "tubeVoltage": "Tension du tube G-M",
-    "tubeVoltageDescription": "Polarisation appliquée au tube G-M d'un compteur connecté. Utilisez une expérience de plateau pour explorer comment le taux de coups dépend de la tension."
+    "tubeVoltageDescription": "Polarisation appliquée au tube G-M d'un compteur connecté. Utilisez une expérience de plateau pour explorer comment le taux de coups dépend de la tension.",
+    "showSamplesPerRunControl": "Contrôle des échantillons par série",
+    "showSamplesPerRunControlDescription": "Ajoute un curseur au panneau d'acquisition pour modifier le nombre d'échantillons qu'une série limitée recueille. Sinon, chaque série recueille un nombre fixe d'échantillons."
   }
 }

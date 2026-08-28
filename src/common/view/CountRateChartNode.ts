@@ -48,6 +48,16 @@ const TARGET_TICK_COUNT = 6;
 /** Dash pattern of the mean reference line. */
 const MEAN_LINE_DASH = [6, 4];
 
+/**
+ * The most points ever handed to the plots. A continuous run at 100x collects
+ * hundreds of samples per real second and never stops on its own, so the run is
+ * unbounded while the chart is only a few hundred pixels wide. Past this many
+ * points the trace is subsampled: drawing one path vertex per sample would cost
+ * more every frame than the frame before it, with nothing on screen to show for
+ * it, and that growth is what eventually locks the sim up.
+ */
+const MAXIMUM_PLOTTED_POINTS = 1000;
+
 export class CountRateChartNode extends VBox {
   private readonly chartTransform: ChartTransform;
   private readonly tracePlot: LinePlot;
@@ -206,17 +216,31 @@ export class CountRateChartNode extends VBox {
 
     // Plot each sample at the midpoint of the interval it covers: the rate is
     // an average over the whole interval, not a value at either edge.
-    const points = samples.map((sample) => new Vector2(sample.startTime + sample.duration / 2, countRate(sample)));
+    //
+    // The y range still follows every sample, so subsampling the trace never
+    // hides a peak by rescaling around it.
+    const stride = Math.ceil(samples.length / MAXIMUM_PLOTTED_POINTS);
+    const points: Vector2[] = [];
+    let highestRate = 1;
+    for (const [index, sample] of samples.entries()) {
+      const rate = countRate(sample);
+      highestRate = Math.max(highestRate, rate);
+      // Always keep the newest sample, so the trace reaches the end of the run.
+      if (index % stride === 0 || index === samples.length - 1) {
+        points.push(new Vector2(sample.startTime + sample.duration / 2, rate));
+      }
+    }
 
     const lastSample = samples[samples.length - 1];
     const xMaximum = lastSample ? lastSample.startTime + lastSample.duration : DEFAULT_X_RANGE.max;
     this.chartTransform.setModelXRange(new Range(0, Math.max(xMaximum, lastSample?.duration ?? 1)));
 
-    const highestRate = Math.max(...points.map((point) => point.y), 1);
     this.chartTransform.setModelYRange(new Range(0, highestRate * Y_HEADROOM));
 
     this.tracePlot.setDataSet(points);
-    this.pointPlot.setDataSet(points);
+    // Markers are only legible while the samples are spread out; once the run is
+    // dense enough to subsample they would read as a solid band.
+    this.pointPlot.setDataSet(stride === 1 ? points : []);
 
     const meanRate = this.model.statisticsProperty.value.mean / this.model.countingIntervalProperty.value;
     const xRange = this.chartTransform.modelXRange;

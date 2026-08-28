@@ -153,6 +153,8 @@
     "beepEnabled": "Pitido del contador Geiger",
     "beepEnabledDescription": "Si se desmarca, silencia el indicador audible de cuentas en un contador Geiger inalámbrico PASCO conectado.",
     "tubeVoltage": "Voltaje del tubo G-M",
-    "tubeVoltageDescription": "Polarización aplicada al tubo G-M de un contador conectado. Use un experimento de meseta para explorar cómo la tasa de cuentas depende del voltaje."
+    "tubeVoltageDescription": "Polarización aplicada al tubo G-M de un contador conectado. Use un experimento de meseta para explorar cómo la tasa de cuentas depende del voltaje.",
+    "showSamplesPerRunControl": "Control de muestras por serie",
+    "showSamplesPerRunControlDescription": "Añade un control deslizante al panel de adquisición para cambiar cuántas muestras recoge una serie limitada. De lo contrario, cada serie recoge un número fijo de muestras."
   }
 }

@@ -5,11 +5,14 @@
 
 import { describe, expect, it } from "vitest";
 import {
+  accumulateValue,
   computeStatistics,
+  EMPTY_ACCUMULATOR,
   EMPTY_STATISTICS,
   gaussianDensity,
   logFactorial,
   poissonProbability,
+  statisticsOf,
 } from "../../../src/common/model/Statistics.js";
 
 describe("computeStatistics", () => {
@@ -54,6 +57,36 @@ describe("computeStatistics", () => {
     const statistics = computeStatistics(values);
     expect(statistics.mean).toBeCloseTo(1_000_000_002.5, 6);
     expect(statistics.variance).toBeCloseTo(5 / 3, 9);
+  });
+});
+
+describe("accumulateValue", () => {
+  it("gives bit-identical results to the batch pass", () => {
+    // The live run folds one value in at a time rather than re-reading the run,
+    // so the two paths must not drift apart.
+    const values = [12, 19, 7, 23, 18, 15, 21, 9, 16, 20];
+
+    let state = EMPTY_ACCUMULATOR;
+    for (const value of values) {
+      state = accumulateValue(state, value);
+    }
+
+    expect(statisticsOf(state)).toEqual(computeStatistics(values));
+  });
+
+  it("matches the batch pass at every prefix of a run", () => {
+    // A run is read after every completed interval, not just at the end.
+    const values = [30, 14, 22, 27, 11, 25, 19, 33];
+
+    let state = EMPTY_ACCUMULATOR;
+    for (let length = 1; length <= values.length; length++) {
+      state = accumulateValue(state, values[length - 1] as number);
+      expect(statisticsOf(state)).toEqual(computeStatistics(values.slice(0, length)));
+    }
+  });
+
+  it("reports an empty accumulator as the empty statistics", () => {
+    expect(statisticsOf(EMPTY_ACCUMULATOR)).toEqual(EMPTY_STATISTICS);
   });
 });
 

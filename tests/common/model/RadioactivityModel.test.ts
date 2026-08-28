@@ -9,7 +9,9 @@
 import { Range } from "scenerystack/dot";
 import { beforeEach, describe, expect, it } from "vitest";
 import { CountSourceType } from "../../../src/common/model/CountSource.js";
+import { createHistogram } from "../../../src/common/model/Histogram.js";
 import { RadioactivityModel } from "../../../src/common/model/RadioactivityModel.js";
+import { computeStatistics } from "../../../src/common/model/Statistics.js";
 
 /** Advances the model by `seconds`, in steps the model will not clamp. */
 function advance(model: RadioactivityModel, seconds: number, step = 0.5): void {
@@ -159,6 +161,35 @@ describe("RadioactivityModel", () => {
     expect(model.samplesProperty.value).toEqual([]);
     expect(model.runTimeProperty.value).toBe(0);
     expect(model.countingIntervalProperty.value).toBe(2);
+  });
+
+  it("keeps the folded-forward results in step with the run, including across a clear", () => {
+    // Statistics and the histogram are accumulated one sample at a time rather
+    // than recomputed from the run, so they can only be trusted if they stay
+    // equal to a from-scratch pass at every point — a clear included, which is
+    // the one case that has to discard the accumulated state instead of adding
+    // to it.
+    const expectStatisticsMatchRun = () => {
+      const counts = model.samplesProperty.value.map((sample) => sample.counts);
+      expect(model.statisticsProperty.value).toEqual(computeStatistics(counts));
+      expect(model.histogramProperty.value).toEqual(createHistogram(counts, model.manualBinWidthProperty.value));
+    };
+
+    model.simulatedSource.activityProperty.value = 25;
+    model.isContinuousProperty.value = true;
+    model.startRecording();
+
+    for (let second = 0; second < 30; second++) {
+      advance(model, 1);
+      expectStatisticsMatchRun();
+    }
+
+    model.clearRun();
+    expect(model.statisticsProperty.value.sampleCount).toBe(0);
+    expect(model.histogramProperty.value.totalSamples).toBe(0);
+
+    advance(model, 10);
+    expectStatisticsMatchRun();
   });
 
   it("does not credit a newly selected source with the old one's backlog", () => {

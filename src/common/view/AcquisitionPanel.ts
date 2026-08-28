@@ -9,6 +9,7 @@
  * control it is on, and the accessible name never has to be recomputed.
  */
 
+import type { TReadOnlyProperty } from "scenerystack/axon";
 import { DerivedProperty, PatternStringProperty } from "scenerystack/axon";
 import { HBox, Node, Text, VBox } from "scenerystack/scenery";
 import { NumberControl, PhetFont } from "scenerystack/scenery-phet";
@@ -17,6 +18,7 @@ import type { ScreenControlA11yStrings } from "../../i18n/StringManager.js";
 import { StringManager } from "../../i18n/StringManager.js";
 import RadioactivityAndStatisticsColors from "../../RadioactivityAndStatisticsColors.js";
 import { CONTROL_PANEL_WIDTH, SAMPLES_PER_RUN_RANGE } from "../../RadioactivityAndStatisticsConstants.js";
+import { ChartViewType, type ChartViewTypeValue } from "../model/ChartViewType.js";
 import { createExportFilename, samplesToCsv } from "../model/csvExport.js";
 import type { RadioactivityModel } from "../model/RadioactivityModel.js";
 import { FLAT_PANEL_PUSH_BUTTON_OPTIONS, LIGHT_SURFACE_TEXT_FILL } from "../RadioactivityAndStatisticsButtonOptions.js";
@@ -27,7 +29,12 @@ import { downloadCsv } from "./downloadCsv.js";
 export class AcquisitionPanel extends RadioactivityAndStatisticsPanel {
   private readonly disposeAcquisitionPanel: () => void;
 
-  public constructor(model: RadioactivityModel, a11y: ScreenControlA11yStrings) {
+  public constructor(
+    model: RadioactivityModel,
+    a11y: ScreenControlA11yStrings,
+    showSamplesPerRunControlProperty: TReadOnlyProperty<boolean>,
+    chartViewProperty: TReadOnlyProperty<ChartViewTypeValue>,
+  ) {
     const stringManager = StringManager.getInstance();
     const strings = stringManager.getAcquisitionStrings();
     const readoutStrings = stringManager.getReadoutStrings();
@@ -75,6 +82,7 @@ export class AcquisitionPanel extends RadioactivityAndStatisticsPanel {
         numberDisplayOptions: { textOptions: { font: new PhetFont(13) } },
         accessibleName: a11y.samplesPerRunControlStringProperty,
         enabledProperty: new DerivedProperty([model.isContinuousProperty], (continuous) => !continuous),
+        visibleProperty: showSamplesPerRunControlProperty,
       },
     );
 
@@ -85,7 +93,11 @@ export class AcquisitionPanel extends RadioactivityAndStatisticsPanel {
         fill: RadioactivityAndStatisticsColors.textColorProperty,
         maxWidth: CONTROL_PANEL_WIDTH - 50,
       }),
-      { ...SIM_CHECKBOX_OPTIONS, accessibleName: a11y.continuousCheckboxStringProperty },
+      {
+        ...SIM_CHECKBOX_OPTIONS,
+        accessibleName: a11y.continuousCheckboxStringProperty,
+        visibleProperty: showSamplesPerRunControlProperty,
+      },
     );
 
     // ── Transport buttons ─────────────────────────────────────────────────────
@@ -126,10 +138,15 @@ export class AcquisitionPanel extends RadioactivityAndStatisticsPanel {
       ...FLAT_PANEL_PUSH_BUTTON_OPTIONS,
       content: new Text(strings.exportCsvStringProperty, { font: new PhetFont(13), fill: LIGHT_SURFACE_TEXT_FILL }),
       listener: () => {
+        // The binned table goes along only while the histogram is the chart on
+        // screen: it is what the student is reading, and its bin width is the
+        // one the bars were drawn with.
+        const isHistogram = chartViewProperty.value === ChartViewType.HISTOGRAM;
         const csv = samplesToCsv(model.samplesProperty.value, {
           sourceDescription: model.sourceDescriptionProperty.value,
           intervalSeconds: model.countingIntervalProperty.value,
           statistics: model.statisticsProperty.value,
+          ...(isHistogram && { histogram: model.histogramProperty.value }),
         });
         downloadCsv(createExportFilename(), csv);
       },

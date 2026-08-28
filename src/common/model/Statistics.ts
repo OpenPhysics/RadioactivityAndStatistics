@@ -56,51 +56,96 @@ export const EMPTY_STATISTICS: SampleStatistics = {
 };
 
 /**
- * Computes descriptive statistics in a single pass.
+ * Running state of Welford's algorithm: everything needed to fold in one more
+ * measurement without revisiting the ones already seen.
  *
- * Uses Welford's algorithm rather than the textbook Σx² − (Σx)²/N form, which
- * loses catastrophic precision when the mean is large compared with the spread
- * — exactly the regime of a high-count-rate source.
- *
- * A single measurement has no defined scatter, so variance and both deviations
- * are reported as 0 for N = 1 rather than NaN.
+ * This is what lets a live run stay cheap. A counting run only ever grows by
+ * appending, so recomputing from the whole array on each new interval is
+ * O(N) work per interval and O(N²) over the run — which at a high speed
+ * multiplier is enough on its own to stall the sim. Folding in the one new
+ * value is O(1), and gives bit-identical results to the batch pass because it
+ * is the same recurrence.
  */
-export function computeStatistics(values: readonly number[]): SampleStatistics {
-  const sampleCount = values.length;
-  if (sampleCount === 0) {
-    return EMPTY_STATISTICS;
-  }
+export type StatisticsAccumulator = {
+  readonly sampleCount: number;
+  readonly mean: number;
+  /** Σ(xᵢ − x̄)², Welford's M₂. Variance is this over N − 1. */
+  readonly sumSquaredDeviations: number;
+  readonly minimum: number;
+  readonly maximum: number;
+  readonly total: number;
+};
 
-  let mean = 0;
-  let sumSquaredDeviations = 0;
-  let minimum = Number.POSITIVE_INFINITY;
-  let maximum = Number.NEGATIVE_INFINITY;
-  let total = 0;
-  let index = 0;
+/** The accumulator before any measurement has been folded in. */
+export const EMPTY_ACCUMULATOR: StatisticsAccumulator = {
+  sampleCount: 0,
+  mean: 0,
+  sumSquaredDeviations: 0,
+  minimum: Number.POSITIVE_INFINITY,
+  maximum: Number.NEGATIVE_INFINITY,
+  total: 0,
+};
 
-  for (const value of values) {
-    index += 1;
-    const delta = value - mean;
-    mean += delta / index;
-    sumSquaredDeviations += delta * (value - mean);
-    minimum = Math.min(minimum, value);
-    maximum = Math.max(maximum, value);
-    total += value;
-  }
-
-  const variance = sampleCount > 1 ? sumSquaredDeviations / (sampleCount - 1) : 0;
-  const standardDeviation = Math.sqrt(variance);
+/**
+ * Folds one more measurement into a running accumulator.
+ *
+ * Uses Welford's update rather than banking Σx and Σx², which loses
+ * catastrophic precision when the mean is large compared with the spread —
+ * exactly the regime of a high-count-rate source.
+ */
+export function accumulateValue(state: StatisticsAccumulator, value: number): StatisticsAccumulator {
+  const sampleCount = state.sampleCount + 1;
+  const delta = value - state.mean;
+  const mean = state.mean + delta / sampleCount;
 
   return {
     sampleCount,
     mean,
+    sumSquaredDeviations: state.sumSquaredDeviations + delta * (value - mean),
+    minimum: Math.min(state.minimum, value),
+    maximum: Math.max(state.maximum, value),
+    total: state.total + value,
+  };
+}
+
+/**
+ * Reads the reportable statistics out of an accumulator.
+ *
+ * A single measurement has no defined scatter, so variance and both deviations
+ * are reported as 0 for N = 1 rather than NaN.
+ */
+export function statisticsOf(state: StatisticsAccumulator): SampleStatistics {
+  if (state.sampleCount === 0) {
+    return EMPTY_STATISTICS;
+  }
+
+  const variance = state.sampleCount > 1 ? state.sumSquaredDeviations / (state.sampleCount - 1) : 0;
+  const standardDeviation = Math.sqrt(variance);
+
+  return {
+    sampleCount: state.sampleCount,
+    mean: state.mean,
     variance,
     standardDeviation,
-    standardErrorOfMean: standardDeviation / Math.sqrt(sampleCount),
-    minimum,
-    maximum,
-    total,
+    standardErrorOfMean: standardDeviation / Math.sqrt(state.sampleCount),
+    minimum: state.minimum,
+    maximum: state.maximum,
+    total: state.total,
   };
+}
+
+/**
+ * Computes descriptive statistics of a complete data set in a single pass.
+ *
+ * The batch form, for callers holding an array they will not extend — the CSV
+ * export, and the tests. A live run uses {@link accumulateValue} instead.
+ */
+export function computeStatistics(values: readonly number[]): SampleStatistics {
+  let state = EMPTY_ACCUMULATOR;
+  for (const value of values) {
+    state = accumulateValue(state, value);
+  }
+  return statisticsOf(state);
 }
 
 // ── Distributions ────────────────────────────────────────────────────────────
