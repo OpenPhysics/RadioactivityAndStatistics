@@ -1,12 +1,14 @@
 /**
  * PascoProtocol.ts
  *
- * Pure, dependency-free encoding/decoding for the PASCO wireless-sensor BLE
- * protocol, scoped to what the Wireless Geiger Counter (PS-3238) needs.
+ * Pure, dependency-free encoding/decoding for the PASCO wireless-sensor
+ * protocol, scoped to what the Wireless Geiger Counter (PS-3238) needs. The
+ * same packets travel over Bluetooth and over USB; only the GATT layout below
+ * is Bluetooth-specific.
  *
  * Everything here is a pure function over bytes and strings so it can be unit
- * tested without a Bluetooth stack. The stateful Web Bluetooth wrapper lives in
- * GeigerCounterDevice.ts.
+ * tested without a Bluetooth stack. The stateful wrappers live in
+ * GeigerCounterDevice.ts and the transports beside it.
  *
  * ── Where this came from ──────────────────────────────────────────────────────
  * Ported from PASCO's own Python library, PASCOscientific/pasco_python
@@ -124,6 +126,15 @@ export const GEIGER_CHANNEL_ID = 0;
 
 /** Service that carries the counting sensor's command/notify characteristics. */
 export const GEIGER_SERVICE_ID = GEIGER_CHANNEL_ID + 1;
+
+/**
+ * PASCO scientific's USB vendor id, from the USB-IF registry.
+ *
+ * Used to filter the WebHID picker so it offers PASCO hardware and nothing
+ * else. Product ids are not published, and differ per device, so the vendor is
+ * the only filter available.
+ */
+export const PASCO_USB_VENDOR_ID = 0x0945;
 
 /**
  * Name the device advertises. PASCO devices advertise "<type> <serial><code>",
@@ -351,6 +362,22 @@ export function parseAdvertisedName(advertisedName: string): ParsedDeviceName {
   }
 
   return { deviceType, serialId, interfaceId };
+}
+
+/**
+ * Whether a name positively identifies some PASCO device other than a Geiger
+ * counter.
+ *
+ * The lenient counterpart of {@link isGeigerCounterName}, for USB. A device's
+ * USB product string comes from its descriptor rather than its BLE
+ * advertisement, so it need not carry the interface-id suffix that
+ * {@link isGeigerCounterName} prefers — and a name that simply says nothing
+ * must not be refused. Only a name that decodes to a *different* interface id
+ * is grounds for refusal.
+ */
+export function isOtherPascoDeviceName(name: string): boolean {
+  const parsed = parseAdvertisedName(name);
+  return parsed.interfaceId !== null && parsed.interfaceId !== GEIGER_INTERFACE_ID;
 }
 
 /**

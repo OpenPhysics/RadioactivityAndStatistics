@@ -1,7 +1,7 @@
 # Implementation notes — Radioactivity and Statistics
 
-Architecture, the PASCO Bluetooth protocol, and the decisions that are not
-obvious from the code.
+Architecture, the PASCO protocol and the two wires it travels over, and the
+decisions that are not obvious from the code.
 
 ## Shape of the sim
 
@@ -11,7 +11,9 @@ one shared acquisition model and one shared view.
 ```
 src/
   common/
-    hardware/   PascoProtocol.ts  GeigerCounterDevice.ts  webBluetoothSupport.ts
+    hardware/   PascoProtocol.ts  GeigerTransport.ts  GeigerCounterDevice.ts
+                BluetoothGeigerTransport.ts  UsbGeigerTransport.ts
+                transportSupport.ts  transportTrace.ts
     model/      RadioactivityModel.ts  RadioactivityScreenModel.ts  CountSource.ts
                 ChartViewType.ts  SimulatedCountSource.ts  GeigerCountSource.ts
                 Statistics.ts  Histogram.ts  GaussianFit.ts  CountSample.ts
@@ -54,7 +56,25 @@ A corollary worth stating: `GeigerCountSource.step()` is deliberately empty. A
 real source must keep accumulating decays while the sim's clock is paused,
 because the physical process does not stop when a user presses pause.
 
-## PASCO Bluetooth protocol
+## The transport abstraction
+
+The counter answers to one protocol over two different wires: Bluetooth Low
+Energy, and USB when it is plugged into the host. Those are the same packets,
+so only the wire is allowed to differ.
+
+`TGeigerTransport` (GeigerTransport.ts) is the whole seam: open a link, close
+it, send a command, hand inbound packets upward. It knows nothing of samples,
+registers, or beepers. `GeigerCounterDevice` sits on top and owns everything
+that is genuinely protocol rather than wire — building commands, matching a
+response to the read in flight, the 2 s read timeout, the decode — and holds one
+transport it never inspects. `GeigerCountSource` above that does not know a wire
+exists at all beyond the value it passes to `connect()`.
+
+The payoff is that the second wire cost no protocol code. It is the same
+argument as the count-source abstraction one level up: find the one narrow thing
+that actually differs, and let everything else be written once.
+
+## PASCO protocol
 
 Ported from PASCO's own Python library,
 [PASCOscientific/pasco_python](https://github.com/PASCOscientific/pasco_python)
@@ -178,8 +198,37 @@ connected. The beep checkbox likewise pushes immediately over BLE.
   and the channel count is unknown until after discovery, so services 0–4 are
   requested up front.
 - Only Chromium-based browsers implement the API, and only in a secure context.
-  `webBluetoothSupport.ts` distinguishes those cases so the panel can say which
-  one applies instead of failing on a click.
+  `transportSupport.ts` distinguishes those cases so the panel can say which one
+  applies instead of failing on a click.
+
+## The USB wire
+
+The counter's own USB port is not only a charging port: PASCO's manual has it
+connecting to a PC, Mac, Chromebook, or Android device for data, and SPARKvue's
+browser build talks to wired sensors, so a browser-reachable path exists.
+
+**WebHID, not WebUSB or Web Serial.** PASCO's USB devices enumerate as HID, so
+the host OS claims them with its own driver — and WebUSB cannot claim an
+interface an OS driver already owns, which rules it out on Windows and macOS.
+Web Serial only sees CDC-ACM ports, which this device does not expose. WebHID is
+left, and it wants no driver installation, which is presumably why SPARKvue's
+browser build uses it too.
+
+The picker is filtered to PASCO scientific's USB vendor id, **0x0945** (USB-IF
+registry). PASCO publish no product ids, so the vendor is the only filter
+available; the name check that follows is deliberately looser than the Bluetooth
+one, because a USB product string comes from the device descriptor and need not
+carry the interface-id suffix a BLE advertisement does. Only a name that decodes
+to a *different* interface id is refused.
+
+USB is point-to-point to one counter, so the device/sensor split that BLE
+expresses as two GATT services has no analogue: both go out as the one HID
+output report, zero-padded to the length the report descriptor declares.
+
+`scripts/probe/usb-probe.html` is the bring-up tool. It dumps what WebHID, Web
+Serial, and WebUSB each see of a plugged-in counter — vendor and product ids,
+the HID report descriptor, interface classes — and will open the device and
+exchange raw PASCO packets with it. Serve it with `npm run dev`.
 
 ## Charts
 
@@ -217,11 +266,11 @@ and to a colour-blind reader without relying on hue at all.
 
 ## Testing
 
-`npm test` — 98 unit tests under `tests/`, mirroring `src/`:
+`npm test` — 110 unit tests under `tests/`, mirroring `src/`:
 
 | File | Covers |
 |---|---|
-| `common/hardware/PascoProtocol.test.ts` | UUIDs, name parsing, base-64 alphabet, packet decode, register wraparound |
+| `common/hardware/PascoProtocol.test.ts` | UUIDs, name parsing, base-64 alphabet, packet decode, register wraparound, USB vendor id and the looser USB name check |
 | `common/model/Statistics.test.ts` | Welford accuracy, log-gamma, Poisson (variance = mean), Poisson→Gaussian convergence |
 | `common/model/Histogram.test.ts` | binning, conservation, per-bin Poisson expectation, bin-count targeting |
 | `common/model/GaussianFit.test.ts` | parameter recovery, degrees of freedom, robustness on ragged data |

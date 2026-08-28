@@ -6,8 +6,9 @@ Sim-specific context for AI assistants. General SceneryStack guidance:
 ## What this sim is
 
 A counting-statistics laboratory. Measure radioactive decay — simulated, or from
-a real **PASCO Wireless Geiger Counter (PS-3238)** over Web Bluetooth — and
-compare the resulting distribution against Poisson and Gaussian theory.
+a real **PASCO Wireless Geiger Counter (PS-3238)** over Web Bluetooth or a USB
+cable — and compare the resulting distribution against Poisson and Gaussian
+theory.
 
 The physics is in [`doc/model.md`](doc/model.md); the architecture, the PASCO
 protocol, and the traps are in
@@ -23,8 +24,12 @@ changing the acquisition or hardware layers.
 | `src/common/model/CountSource.ts` | The `TCountSource` contract: a monotonic running total. The reason hardware and simulated data share one code path |
 | `src/common/model/SimulatedCountSource.ts` | Poisson event generator (the default source, and the only one with a known λ) |
 | `src/common/model/GeigerCountSource.ts` | Hardware source: connection lifecycle, polling loop, register interpretation |
-| `src/common/hardware/PascoProtocol.ts` | Pure wire-format encode/decode for the PASCO BLE protocol |
-| `src/common/hardware/GeigerCounterDevice.ts` | The **only** file touching `navigator.bluetooth` |
+| `src/common/hardware/PascoProtocol.ts` | Pure wire-format encode/decode for the PASCO protocol |
+| `src/common/hardware/GeigerTransport.ts` | The `TGeigerTransport` contract: opaque PASCO packets over one wire. The reason Bluetooth and USB share every layer above the wire |
+| `src/common/hardware/GeigerCounterDevice.ts` | The counter itself, independent of wire: commands, response matching, read timeout |
+| `src/common/hardware/BluetoothGeigerTransport.ts` | The **only** file touching `navigator.bluetooth` |
+| `src/common/hardware/UsbGeigerTransport.ts` | The **only** file touching `navigator.hid` |
+| `src/common/hardware/transportSupport.ts` | Per-wire feature detection, so the panel can say which wire is missing and why |
 | `src/common/model/Statistics.ts` | Welford statistics, log-gamma, Poisson and Gaussian distributions |
 | `src/common/model/Histogram.ts` | Integer binning, bin-width choice, per-bin expected frequencies |
 | `src/common/model/GaussianFit.ts` | Levenberg–Marquardt fit with Poisson weighting |
@@ -36,10 +41,12 @@ changing the acquisition or hardware layers.
 
 ## Things that will bite
 
-**Web Bluetooth needs the user gesture.** `requestDevice` only opens its picker
-during a real user gesture, and `GeigerCounterDevice.connect()` runs
-synchronously up to that call. Do not put an `await` before it in a button
-listener, and do not wrap the listener in anything that defers.
+**Every device picker needs the user gesture.** Web Bluetooth's `requestDevice`
+and WebHID's both open their picker only during a real user gesture, and a
+gesture does not survive an `await`. `GeigerCountSource.connect()` →
+`GeigerCounterDevice.connect()` → the transport runs synchronously up to that
+call. Do not put an `await` before it in a button listener, and do not wrap the
+listener in anything that defers.
 
 **`GeigerCountSource.step()` is empty on purpose.** A real source must keep
 counting while the sim clock is paused — the decays do not stop.
@@ -78,17 +85,23 @@ undercounts by roughly 15%.
 |---|---|
 | `?showDiagnostics=true` | Show the raw count register and GM tube voltage in the source panel |
 | `?beepEnabled=false` | Silence the audible count beep on a connected Geiger counter |
-| `?tubeVoltage=500` | G-M tube bias setpoint in volts (Preferences slider; applied over BLE) |
+| `?tubeVoltage=500` | G-M tube bias setpoint in volts (Preferences slider; applied over the open link) |
+| `?debugTransport=true` | Byte-level tracing of both directions on either wire (`?debugBluetooth=true` still works) |
 
 Also surfaced in Preferences → Simulation.
 
 ## Hardware testing
 
 Requires a PASCO Wireless Geiger Counter, powered on, and Chrome or Edge on
-HTTPS or `localhost`. There is no way to exercise the Bluetooth path in CI or in
-a headless environment — `tests/common/hardware/PascoProtocol.test.ts` covers the
+HTTPS or `localhost`. Either wire will do: Bluetooth, or a USB cable to the
+counter's own port. There is no way to exercise either transport in CI or in a
+headless environment — `tests/common/hardware/PascoProtocol.test.ts` covers the
 wire format, and everything above the transport is exercised through the
 simulated source.
+
+`scripts/probe/usb-probe.html` (served by `npm run dev`) is the bring-up tool for
+the USB path: it dumps what WebHID, Web Serial, and WebUSB each see, and will
+open the HID device and exchange raw PASCO packets with it.
 
 To sanity-check a real device: connect, enable diagnostics, and watch the tube
 voltage. It should read 500 V. Zero there means no sample is being decoded, not
@@ -121,9 +134,9 @@ here. Dependabot ignores these three names (see `.github/dependabot.yml`).
 | `three` | `~0.125.2` | SceneryStack declares `^0.104.0`. Floor is 0.125.0 for GHSA-fq6p-x6j3-cmmq. **0.125.x still has open CVEs** (XSS GHSA-7vvq-7r29-5vg3, fixed only in ≥0.137.0). Remove if SceneryStack drops `three` or pins a patched line. |
 | `brace-expansion` | `~5.0.9` | Transitive via `vite-plugin-pwa` / Workbox. Clears npm audit (GHSA-mh99-v99m-4gvg; keep ≥5.0.9 for GHSA-rgw5-rvv9-x895). |
 
-`@types/web-bluetooth` is a devDependency and must stay in the `types` array of
-**both** `tsconfig.json` and `tsconfig.test.json` — the tests import `src`
-modules that reference the Web Bluetooth globals.
+`@types/web-bluetooth` and `@types/w3c-web-hid` are devDependencies and must stay
+in the `types` array of **both** `tsconfig.json` and `tsconfig.test.json` — the
+tests import `src` modules that reference the Web Bluetooth and WebHID globals.
 
 ## PWA
 

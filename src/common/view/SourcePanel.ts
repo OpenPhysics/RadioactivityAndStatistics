@@ -2,8 +2,10 @@
  * SourcePanel.ts
  *
  * Shows the controls for the one counting source a screen is fixed to — the
- * simulated activity slider, or the Bluetooth connection controls — and
- * manages the Bluetooth connection when that source is a real Geiger counter.
+ * simulated activity slider, or the hardware connection controls — and manages
+ * the connection when that source is a real Geiger counter. A counter can be
+ * reached over Bluetooth or over USB, so the panel offers one connect button
+ * per wire this browser actually supports.
  *
  * Each screen now has a fixed source (there is nothing to choose between), so
  * this panel only ever builds the controls for the {@link CountSourceType} it
@@ -21,7 +23,8 @@ import type { ScreenControlA11yStrings } from "../../i18n/StringManager.js";
 import { StringManager } from "../../i18n/StringManager.js";
 import RadioactivityAndStatisticsColors from "../../RadioactivityAndStatisticsColors.js";
 import { CONTROL_PANEL_WIDTH, SPEED_MULTIPLIER_CHOICES } from "../../RadioactivityAndStatisticsConstants.js";
-import { getWebBluetoothStatus, WebBluetoothStatus } from "../hardware/webBluetoothSupport.js";
+import { TransportKind, type TransportKindValue } from "../hardware/GeigerTransport.js";
+import { getAvailableTransports, getTransportStatus, TransportStatus } from "../hardware/transportSupport.js";
 import { ConnectionState } from "../model/ConnectionState.js";
 import { CountSourceType, type CountSourceTypeValue } from "../model/CountSource.js";
 import type { RadioactivityModel } from "../model/RadioactivityModel.js";
@@ -209,10 +212,16 @@ function createGeigerControls(
   });
 
   // The device's own name is the only way to tell two counters apart on a
-  // bench with several of them running.
+  // bench with several of them running; the wire matters because a USB counter
+  // is charging while it counts and a Bluetooth one is not.
   const deviceNameProperty = new DerivedProperty(
-    [geigerSource.deviceInfoProperty],
-    (info) => info?.advertisedName ?? "",
+    [geigerSource.deviceInfoProperty, strings.transportBluetoothStringProperty, strings.transportUsbStringProperty],
+    (info, bluetooth, usb) => {
+      if (!info) {
+        return "";
+      }
+      return `${info.advertisedName} · ${info.transport === TransportKind.USB ? usb : bluetooth}`;
+    },
   );
   const deviceNameText = new Text(deviceNameProperty, {
     font: new PhetFont(11),
@@ -226,18 +235,14 @@ function createGeigerControls(
     (state) => state === ConnectionState.CONNECTED,
   );
 
-  const connectButton = new RectangularPushButton({
-    ...FLAT_PANEL_PUSH_BUTTON_OPTIONS,
-    content: new Text(strings.connectStringProperty, { font: new PhetFont(13), fill: LIGHT_SURFACE_TEXT_FILL }),
-    // Web Bluetooth only opens its picker during a user gesture, so this must
-    // reach requestDevice without an intervening await — it does: connect()
-    // runs synchronously up to that call.
-    listener: () => {
-      geigerSource.connect().catch(() => undefined);
-    },
-    accessibleName: a11y.connectButtonStringProperty,
-    visibleProperty: new DerivedProperty([isConnectedProperty], (connected) => !connected),
-  });
+  const isDisconnectedProperty = new DerivedProperty([isConnectedProperty], (connected) => !connected);
+
+  // One button per wire the browser can actually use. A wire the browser does
+  // not implement is left out rather than shown disabled: an absent button
+  // cannot be clicked in hope, and the message below says what is missing.
+  const connectButtons = getAvailableTransports().map((transport) =>
+    createConnectButton(geigerSource, transport, strings, a11y, isDisconnectedProperty),
+  );
 
   const disconnectButton = new RectangularPushButton({
     ...FLAT_PANEL_PUSH_BUTTON_OPTIONS,
@@ -250,17 +255,17 @@ function createGeigerControls(
   });
 
   // Reasons a connection can never succeed here are worth stating up front,
-  // rather than after a click that silently does nothing.
-  const browserStatus = getWebBluetoothStatus();
+  // rather than after a click that silently does nothing. Both wires need a
+  // secure context, so that diagnosis reads off either one.
   const unavailableMessage =
-    browserStatus === WebBluetoothStatus.INSECURE_CONTEXT
+    getTransportStatus(TransportKind.BLUETOOTH) === TransportStatus.INSECURE_CONTEXT
       ? strings.insecureContextStringProperty
       : strings.unsupportedBrowserStringProperty;
   const unavailableText = new Text(unavailableMessage, {
     font: new PhetFont(11),
     fill: RadioactivityAndStatisticsColors.statusCriticalColorProperty,
     maxWidth: CONTROL_PANEL_WIDTH - 30,
-    visible: browserStatus !== WebBluetoothStatus.AVAILABLE,
+    visible: connectButtons.length === 0,
   });
 
   const errorTextProperty = new DerivedProperty([geigerSource.errorMessageProperty], (message) => message ?? "");
@@ -304,6 +309,7 @@ function createGeigerControls(
     statusColorProperty,
     deviceNameProperty,
     isConnectedProperty,
+    isDisconnectedProperty,
     errorTextProperty,
     registerValueProperty,
     tubeVoltageValueProperty,
@@ -312,6 +318,36 @@ function createGeigerControls(
   return new VBox({
     align: "left",
     spacing: 6,
-    children: [statusRow, deviceNameText, connectButton, disconnectButton, unavailableText, errorText, diagnostics],
+    children: [statusRow, deviceNameText, ...connectButtons, disconnectButton, unavailableText, errorText, diagnostics],
+  });
+}
+
+/**
+ * Builds the connect button for one wire.
+ *
+ * The listener calls `connect` directly. Every picker API — Web Bluetooth's
+ * `requestDevice`, WebHID's — only opens during a user gesture, and a gesture
+ * does not survive an `await`, so nothing may be awaited before that call. It
+ * is not: `connect()` runs synchronously up to the picker.
+ */
+function createConnectButton(
+  geigerSource: RadioactivityModel["geigerSource"],
+  transport: TransportKindValue,
+  strings: ReturnType<typeof StringManager.prototype.getSourceStrings>,
+  a11y: ScreenControlA11yStrings,
+  visibleProperty: TReadOnlyProperty<boolean>,
+): RectangularPushButton {
+  const isUsb = transport === TransportKind.USB;
+  return new RectangularPushButton({
+    ...FLAT_PANEL_PUSH_BUTTON_OPTIONS,
+    content: new Text(isUsb ? strings.connectUsbStringProperty : strings.connectBluetoothStringProperty, {
+      font: new PhetFont(13),
+      fill: LIGHT_SURFACE_TEXT_FILL,
+    }),
+    listener: () => {
+      geigerSource.connect(transport).catch(() => undefined);
+    },
+    accessibleName: isUsb ? a11y.connectUsbButtonStringProperty : a11y.connectBluetoothButtonStringProperty,
+    visibleProperty,
   });
 }

@@ -3,9 +3,10 @@
  *
  * A {@link TCountSource} backed by a real PASCO Wireless Geiger Counter.
  *
- * Owns the BLE connection lifecycle and a polling loop that keeps the running
- * total up to date. The sim's timebase stays in RadioactivityModel; this class
- * only answers "how many counts have arrived so far".
+ * Owns the connection lifecycle — over Bluetooth or over USB, the choice is the
+ * caller's — and a polling loop that keeps the running total up to date. The
+ * sim's timebase stays in RadioactivityModel; this class only answers "how many
+ * counts have arrived so far".
  *
  * ── Interpreting the CountRate register ───────────────────────────────────────
  * Measurement 0 of sensor 2079 is "CountRate", and the device CLEARS it on
@@ -21,11 +22,13 @@
  */
 
 import { BooleanProperty, NumberProperty, Property, type TReadOnlyProperty } from "scenerystack/axon";
+import { GeigerCounterDevice } from "../hardware/GeigerCounterDevice.js";
 import {
   DeviceSelectionCancelled,
-  GeigerCounterDevice,
   type GeigerDeviceInfo,
-} from "../hardware/GeigerCounterDevice.js";
+  TransportKind,
+  type TransportKindValue,
+} from "../hardware/GeigerTransport.js";
 import { TUBE_VOLTAGE_CONTROL_RANGE } from "../hardware/PascoProtocol.js";
 import { ConnectionState, type ConnectionStateValue } from "./ConnectionState.js";
 import { CountSourceType, type CountSourceTypeValue, type TCountSource } from "./CountSource.js";
@@ -43,14 +46,15 @@ export type GeigerDeviceControls = {
 
 /**
  * How often the device is polled, in ms. Fast enough to resolve a one-second
- * counting interval, slow enough to sit well inside a BLE connection interval.
+ * counting interval, slow enough to sit well inside a BLE connection interval
+ * (the tighter of the two wires).
  */
 const DEFAULT_POLL_INTERVAL_MS = 100;
 
 /**
  * TEMPORARY: `?pollIntervalMs=N` overrides the polling period, so the CountRate
  * register's behaviour can be identified by seeing whether its magnitude scales
- * with the gap between reads. Remove with the tracing in GeigerCounterDevice.
+ * with the gap between reads. Remove with the tracing in transportTrace.ts.
  */
 const POLL_INTERVAL_MS = (() => {
   if (typeof window === "undefined") {
@@ -66,7 +70,7 @@ const MAXIMUM_CONSECUTIVE_FAILURES = 10;
 export class GeigerCountSource implements TCountSource {
   public readonly sourceType: CountSourceTypeValue = CountSourceType.GEIGER_COUNTER;
 
-  /** Where the Bluetooth connection stands. */
+  /** Where the connection stands, on whichever wire it was opened. */
   public readonly connectionStateProperty: Property<ConnectionStateValue>;
 
   /** Human-readable reason for the most recent failure, or null. */
@@ -132,13 +136,15 @@ export class GeigerCountSource implements TCountSource {
   }
 
   /**
-   * Opens the browser's device picker and connects.
+   * Opens the browser's device picker for one wire and connects.
    *
-   * Must be called directly from a user gesture — Web Bluetooth refuses to show
-   * the picker otherwise. A cancelled picker is not an error; it simply returns
-   * the source to the disconnected state.
+   * Must be called directly from a user gesture — every picker API refuses to
+   * open otherwise. A cancelled picker is not an error; it simply returns the
+   * source to the disconnected state.
+   *
+   * @param transport - which wire to reach the counter over
    */
-  public async connect(): Promise<void> {
+  public async connect(transport: TransportKindValue = TransportKind.BLUETOOTH): Promise<void> {
     if (this.connectionStateProperty.value === ConnectionState.CONNECTING) {
       return;
     }
@@ -147,7 +153,7 @@ export class GeigerCountSource implements TCountSource {
     this.errorMessageProperty.value = null;
 
     try {
-      await this.device.connect();
+      await this.device.connect(transport);
     } catch (error) {
       if (error instanceof DeviceSelectionCancelled) {
         this.connectionStateProperty.value = ConnectionState.DISCONNECTED;
@@ -299,7 +305,7 @@ export class GeigerCountSource implements TCountSource {
     this.totalCounts.value += register;
   }
 
-  /** The device dropped the link on its own — flat battery, out of range, off. */
+  /** The device dropped the link on its own — flat battery, out of range, unplugged, off. */
   private handleUnexpectedDisconnect(): void {
     this.stopPolling();
     this.isAvailableProperty.value = false;

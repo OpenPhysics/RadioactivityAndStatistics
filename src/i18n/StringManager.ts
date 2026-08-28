@@ -50,12 +50,13 @@ const stringProperties = LocalizedString.getNestedStringProperties({
  * same panels — only the fixed counting source and the default chart differ
  * between them — so one shape covers both `a11y.simulation.controls` and
  * `a11y.device.controls`; a screen simply never wires up the accessible name
- * that belongs to the other one's source (e.g. the Bluetooth screen never
+ * that belongs to the other one's source (e.g. the Device screen never
  * builds `activitySlider`).
  */
 export type ScreenControlA11yStrings = {
   readonly activitySliderStringProperty: ReadOnlyProperty<string>;
-  readonly connectButtonStringProperty: ReadOnlyProperty<string>;
+  readonly connectBluetoothButtonStringProperty: ReadOnlyProperty<string>;
+  readonly connectUsbButtonStringProperty: ReadOnlyProperty<string>;
   readonly disconnectButtonStringProperty: ReadOnlyProperty<string>;
   readonly intervalControlStringProperty: ReadOnlyProperty<string>;
   readonly samplesPerRunControlStringProperty: ReadOnlyProperty<string>;
@@ -143,7 +144,7 @@ export class StringManager {
     return stringProperties.a11y.simulation;
   }
 
-  /** Accessibility strings for the Device screen (the Bluetooth Geiger counter). */
+  /** Accessibility strings for the Device screen (a real Geiger counter over Bluetooth or USB). */
   public getDeviceA11yStrings() {
     return stringProperties.a11y.device;
   }

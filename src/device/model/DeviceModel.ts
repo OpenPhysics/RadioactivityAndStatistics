@@ -2,7 +2,7 @@
  * DeviceModel.ts
  *
  * Model for the Device screen: a real PASCO Wireless Geiger Counter connected
- * over Bluetooth, that can be viewed as either the histogram or the
+ * over Bluetooth or USB, that can be viewed as either the histogram or the
  * count-rate chart.
  */
 

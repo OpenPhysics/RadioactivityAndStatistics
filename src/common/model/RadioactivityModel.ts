@@ -72,7 +72,7 @@ export class RadioactivityModel implements TModel {
   /** Poisson generator; always available, and the only source with a known λ. */
   public readonly simulatedSource: SimulatedCountSource;
 
-  /** PASCO Wireless Geiger Counter over Web Bluetooth. */
+  /** PASCO Wireless Geiger Counter, over Bluetooth or USB. */
   public readonly geigerSource: GeigerCountSource;
 
   /** Which source feeds the counting cycle. */

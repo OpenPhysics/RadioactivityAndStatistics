@@ -29,7 +29,7 @@ const radioactivityAndStatisticsQueryParameters = QueryStringMachine.getAll({
   /**
    * Whether a connected Geiger counter may beep on each count.
    *
-   * Surfaced in Preferences → Simulation; applied over BLE when a counter is
+   * Surfaced in Preferences → Simulation; applied over the open link when a counter is
    * connected.
    */
   beepEnabled: {

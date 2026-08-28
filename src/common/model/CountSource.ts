@@ -20,7 +20,7 @@ import type { TReadOnlyProperty } from "scenerystack/axon";
 export const CountSourceType = {
   /** Pseudo-random Poisson events generated in the browser. */
   SIMULATED: "simulated",
-  /** A PASCO Wireless Geiger Counter over Web Bluetooth. */
+  /** A PASCO Wireless Geiger Counter, over Bluetooth or USB. */
   GEIGER_COUNTER: "geigerCounter",
 } as const;
 
@@ -45,14 +45,14 @@ export type TCountSource = {
 
   /**
    * Whether the source is currently able to deliver counts. Always true for a
-   * simulated source; tracks the BLE connection for a hardware one.
+   * simulated source; tracks the hardware connection for a real one.
    */
   readonly isAvailableProperty: TReadOnlyProperty<boolean>;
 
   /**
    * Advances a source that runs on the sim's clock.
    *
-   * Hardware sources ignore this — they advance from BLE notifications, on the
+   * Hardware sources ignore this — they advance from device packets, on the
    * device's clock, and must keep counting even while the sim is paused.
    */
   step(dt: number): void;

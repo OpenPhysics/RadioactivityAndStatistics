@@ -18,7 +18,9 @@ import {
   GEIGER_INTERFACE_ID,
   GEIGER_SAMPLE_BYTES,
   isGeigerCounterName,
+  isOtherPascoDeviceName,
   OPTIONAL_SERVICE_UUIDS,
+  PASCO_USB_VENDOR_ID,
   parseAdvertisedName,
   pascoUuid,
   RESPONSE,
@@ -84,6 +86,32 @@ describe("parseAdvertisedName", () => {
     expect(parsed.deviceType).toBe("Unnamed");
     expect(parsed.serialId).toBeNull();
     expect(parsed.interfaceId).toBeNull();
+  });
+});
+
+describe("isOtherPascoDeviceName", () => {
+  it("refuses a PASCO sensor whose encoded interface id is not the counter's", () => {
+    expect(isOtherPascoDeviceName("Temperature 123-456X1")).toBe(true);
+  });
+
+  it("accepts the counter's own name", () => {
+    expect(isOtherPascoDeviceName("Geiger Counter 123-456Xe")).toBe(false);
+  });
+
+  it("accepts a name that encodes no interface id at all", () => {
+    // A USB product string comes from the device descriptor, not the BLE
+    // advertisement, so it need not carry the suffix. Silence is not grounds
+    // for refusal — this is the whole difference from isGeigerCounterName.
+    expect(isOtherPascoDeviceName("Geiger Counter")).toBe(false);
+    expect(isOtherPascoDeviceName("PS-3238")).toBe(false);
+    expect(isGeigerCounterName("PS-3238")).toBe(false);
+  });
+});
+
+describe("PASCO_USB_VENDOR_ID", () => {
+  it("is the vendor id the USB-IF registry assigns to PASCO scientific", () => {
+    // The only filter available to the WebHID picker: PASCO publish no product ids.
+    expect(PASCO_USB_VENDOR_ID).toBe(0x0945);
   });
 });
 

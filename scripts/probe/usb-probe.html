@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>PASCO USB transport probe</title>
+<link rel="icon" href="data:,">
+<style>
+  body { font: 14px/1.5 system-ui, sans-serif; margin: 2rem; max-width: 60rem; }
+  h1 { font-size: 1.2rem; }
+  button { font: inherit; padding: .4rem .8rem; margin: 0 .4rem .4rem 0; }
+  pre { background: #111; color: #ddd; padding: 1rem; overflow-x: auto; white-space: pre-wrap; }
+  .support b { font-family: monospace; }
+</style>
+</head>
+<body>
+<h1>PASCO Geiger counter — USB transport probe</h1>
+<p>Plug the counter in over USB, power it on, then try each picker. The picker
+lists <em>all</em> devices of that kind; look for the PASCO / Geiger entry.</p>
+<div class="support" id="support"></div>
+<p>
+  <button type="button" id="hid">1. HID picker</button>
+  <button type="button" id="serial">2. Serial picker</button>
+  <button type="button" id="usb">3. WebUSB picker</button>
+  <button type="button" id="known">List already-permitted</button>
+  <button type="button" id="clear">Clear log</button>
+</p>
+<p>
+  <button type="button" id="listen" disabled>Open + listen (HID)</button>
+  <button type="button" id="read" disabled>Send READ_ONE_SAMPLE [05 04]</button>
+  <button type="button" id="keepalive" disabled>Send KEEPALIVE [00]</button>
+</p>
+<pre id="log"></pre>
+<script type="module" src="./usb-probe.js"></script>
+</body>
+</html>
