@@ -31,7 +31,6 @@ import {
   DEFAULT_COUNTING_INTERVAL,
   DEFAULT_SAMPLES_PER_RUN,
   DEFAULT_SPEED_MULTIPLIER,
-  MAXIMUM_INTERVALS_PER_FRAME,
   MAXIMUM_STEP_DT,
   SAMPLES_PER_RUN_RANGE,
   SPEED_MULTIPLIER_CHOICES,
@@ -300,7 +299,6 @@ export class RadioactivityModel implements TModel {
 
     const source = this.activeSourceProperty.value;
     const interval = this.countingIntervalProperty.value;
-    let completed = 0;
 
     // A simulated count is one Poisson draw for whatever dt it is given. Once
     // a speed multiplier or a short interval lets one frame span more than
@@ -308,12 +306,19 @@ export class RadioactivityModel implements TModel {
     // boundary rather than once for the whole frame — otherwise every
     // interval after the first in that frame would close over a count that
     // was already spent (and reset to zero) by the one before it.
+    //
+    // There used to be a cap on how many intervals a single frame could
+    // complete, meant as a runaway-loop guard. It instead created a runaway:
+    // once a slow frame handed back more simulated time than the cap could
+    // drain, the surplus was stepped through the source in one lump without
+    // completing any interval, then misread on the next frame as a single
+    // interval's worth of counts — a spike that grew every time it
+    // recurred, since draining the backlog could never outrun the surplus
+    // still arriving each frame. MAXIMUM_STEP_DT already bounds remainingDt,
+    // and the shortest interval (0.25 s) keeps the iteration count here
+    // trivial even at the fastest speed multiplier, so no cap is needed.
     while (remainingDt > 0) {
-      const timeToIntervalEnd =
-        completed < MAXIMUM_INTERVALS_PER_FRAME
-          ? Math.max(interval - this.intervalElapsedProperty.value, 0)
-          : remainingDt;
-      const stepDt = Math.min(remainingDt, timeToIntervalEnd);
+      const stepDt = Math.min(remainingDt, Math.max(interval - this.intervalElapsedProperty.value, 0));
 
       source.step(stepDt);
       this.intervalElapsedProperty.value += stepDt;
@@ -325,9 +330,8 @@ export class RadioactivityModel implements TModel {
 
       remainingDt -= stepDt;
 
-      if (completed < MAXIMUM_INTERVALS_PER_FRAME && this.intervalElapsedProperty.value >= interval) {
+      if (this.intervalElapsedProperty.value >= interval) {
         this.completeInterval(interval);
-        completed += 1;
       }
     }
   }

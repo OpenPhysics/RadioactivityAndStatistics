@@ -139,16 +139,6 @@ export const BIN_WIDTH_RANGE = new Range(1, 20);
  */
 export const MAXIMUM_STEP_DT = 0.5;
 
-/**
- * Cap on intervals completed in a single frame, as a runaway-loop guard.
- *
- * Sized to keep up with the fastest speed multiplier (100×) at the shortest
- * counting interval (0.25 s): a 60 fps frame then needs to complete up to
- * ~7 intervals to avoid throttling the requested speedup. Any surplus beyond
- * the cap is not lost — the remainder carries into the next frame.
- */
-export const MAXIMUM_INTERVALS_PER_FRAME = 20;
-
 RadioactivityAndStatisticsNamespace.register("RadioactivityAndStatisticsConstants", {
   SCREEN_VIEW_MARGIN,
   PANEL_CORNER_RADIUS,
@@ -177,5 +167,4 @@ RadioactivityAndStatisticsNamespace.register("RadioactivityAndStatisticsConstant
   DEFAULT_ACTIVITY,
   BIN_WIDTH_RANGE,
   MAXIMUM_STEP_DT,
-  MAXIMUM_INTERVALS_PER_FRAME,
 });
